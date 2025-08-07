@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSpotifyStore } from "../../store/spotify";
 
 export default function CallbackPage() {
   const router = useRouter();
   const { setAccessToken } = useSpotifyStore();
+  const hasProcessed = useRef(false);
 
   const exchangeCodeForToken = useCallback(
     async (code: string, codeVerifier: string) => {
@@ -42,7 +43,7 @@ export default function CallbackPage() {
             localStorage.setItem("spotify_refresh_token", data.refresh_token);
           }
           localStorage.removeItem("code_verifier");
-          router.push("/");
+          router.push("/controls");
         } else {
           console.error("No access token received");
           router.push("/");
@@ -56,6 +57,12 @@ export default function CallbackPage() {
   );
 
   useEffect(() => {
+    if (hasProcessed.current) {
+      return;
+    }
+
+    hasProcessed.current = true;
+
     console.log("Callback page loaded");
     console.log("Full URL:", window.location.href);
 
@@ -87,7 +94,7 @@ export default function CallbackPage() {
       console.log("No authorization code found");
       router.push("/");
     }
-  }, [router, setAccessToken, exchangeCodeForToken]);
+  }, [router, exchangeCodeForToken]);
   return (
     <div
       style={{

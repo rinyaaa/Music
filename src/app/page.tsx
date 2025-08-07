@@ -1,13 +1,22 @@
 "use client";
 
 import SpotifyAuth from "../components/SpotifyAuth";
-import SpotifyPlayer from "../components/SpotifyPlayer";
-import MusicControls from "../components/MusicControls";
 import { useSpotifyStore } from "../store/spotify";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import styles from "./page.module.scss";
 
 export default function Home() {
   const { accessToken } = useSpotifyStore();
+  const router = useRouter();
+  const hasRedirected = useRef(false);
+
+  useEffect(() => {
+    if (accessToken && !hasRedirected.current) {
+      hasRedirected.current = true;
+      router.push("/controls");
+    }
+  }, [accessToken, router]);
 
   return (
     <div className={styles.page}>
@@ -18,20 +27,6 @@ export default function Home() {
 
       <main className={styles.main}>
         <SpotifyAuth />
-
-        {accessToken && (
-          <>
-            <SpotifyPlayer />
-            <MusicControls />
-          </>
-        )}
-
-        {!accessToken && (
-          <div className={styles.instructions}>
-            <h2>ログインしてください</h2>
-            <p>Spotifyアカウントでログインすると音楽制御ができます</p>
-          </div>
-        )}
       </main>
     </div>
   );

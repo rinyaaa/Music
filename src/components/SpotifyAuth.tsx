@@ -32,6 +32,8 @@ const SpotifyAuth = () => {
       "user-read-currently-playing",
       "playlist-read-private",
       "playlist-read-collaborative",
+      "user-library-read",
+      "user-library-modify",
     ];
 
     const params = new URLSearchParams({
@@ -48,24 +50,10 @@ const SpotifyAuth = () => {
     window.location.href = spotifyUrl;
   };
 
-  const handleLogout = () => {
-    setAccessToken(null);
-    localStorage.removeItem("spotify_access_token");
-  };
-
-  if (accessToken) {
-    return (
-      <div className={styles.authContainer}>
-        <div className={styles.status}>
-          <span className={styles.statusIndicator}></span>
-          Spotify に接続済み
-        </div>
-        <button onClick={handleLogout} className={styles.logoutButton}>
-          ログアウト
-        </button>
-      </div>
-    );
-  }
+  // const handleLogout = () => {
+  //   setAccessToken(null);
+  //   localStorage.removeItem("spotify_access_token");
+  // };
 
   return (
     <div className={styles.authContainer}>
