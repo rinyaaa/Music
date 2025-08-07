@@ -57,8 +57,6 @@ const SpotifyAuth = () => {
 
   return (
     <div className={styles.authContainer}>
-      <h2>Spotify ジェスチャーコントローラー</h2>
-      <p>音楽をジェスチャーで操作するために、Spotifyにログインしてください</p>
       <button onClick={handleLogin} className={styles.loginButton}>
         Spotify でログイン
       </button>
