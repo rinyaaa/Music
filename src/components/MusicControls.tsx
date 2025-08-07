@@ -2,64 +2,11 @@
 
 import { useSpotifyStore } from "../store/spotify";
 import styles from "./MusicControls.module.scss";
+import Image from "next/image";
 
 const MusicControls = () => {
   const { accessToken, deviceId, isPlaying, currentTrack, player } =
     useSpotifyStore();
-
-  // Spotify Web APIを使用した音楽制御
-  const spotifyApi = async (
-    endpoint: string,
-    method: string = "POST",
-    body?: Record<string, unknown>
-  ) => {
-    if (!accessToken) {
-      console.error("Access token is missing");
-      return null;
-    }
-
-    try {
-      const url = endpoint
-        ? `https://api.spotify.com/v1/me/player/${endpoint}`
-        : `https://api.spotify.com/v1/me/player`;
-
-      console.log(`Making API call: ${method} ${url}`, body);
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-
-      console.log(`API Response: ${response.status} ${response.statusText}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          `Spotify API error: ${response.status} ${response.statusText}`,
-          errorText
-        );
-        return null;
-      }
-
-      // 一部のエンドポイントは空のレスポンスを返す
-      if (response.status === 204) {
-        return null;
-      }
-
-      try {
-        return await response.json();
-      } catch {
-        return null;
-      }
-    } catch (error) {
-      console.error("Spotify API call failed:", error);
-      return null;
-    }
-  };
 
   const togglePlayPause = async () => {
     if (!player) return;
@@ -101,53 +48,17 @@ const MusicControls = () => {
     }
   };
 
-  // テスト用のプレイリスト再生
+  // テスト再生機能
   const playTestPlaylist = async () => {
-    console.log("Testing playback...");
-    console.log("Device ID:", deviceId);
-    console.log("Access Token:", accessToken ? "Present" : "Missing");
-
     if (!accessToken || !deviceId) {
-      console.error("Missing access token or device ID");
       alert("Spotifyに接続してデバイスを設定してください");
       return;
     }
 
     try {
-      // ステップ1: デバイスをアクティブにする
-      console.log("Step 1: Activating device...");
-      const activateResponse = await fetch(
-        "https://api.spotify.com/v1/me/player",
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            device_ids: [deviceId],
-            play: false,
-          }),
-        }
-      );
-
-      if (!activateResponse.ok && activateResponse.status !== 204) {
-        const errorText = await activateResponse.text();
-        console.error(
-          "Device activation failed:",
-          activateResponse.status,
-          errorText
-        );
-      } else {
-        console.log("Device activated successfully");
-      }
-
-      // ステップ2: 少し待ってから再生
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      console.log("Step 2: Starting playback...");
-      const playResponse = await fetch(
-        "https://api.spotify.com/v1/me/player/play",
+      // デバイス指定で直接再生
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
         {
           method: "PUT",
           headers: {
@@ -160,61 +71,16 @@ const MusicControls = () => {
         }
       );
 
-      if (!playResponse.ok) {
-        const errorText = await playResponse.text();
-        console.error("Playback failed:", playResponse.status, errorText);
-
-        // もし404エラーなら、代替方法を試す
-        if (playResponse.status === 404) {
-          console.log("Trying alternative method with device_id in body...");
-          await tryPlaybackWithDeviceId();
-        } else {
-          alert(`再生に失敗しました: ${playResponse.status} ${errorText}`);
-        }
+      if (response.ok || response.status === 204) {
+        alert("🎵 再生開始！");
       } else {
-        console.log("Playback started successfully");
-        alert("再生を開始しました！");
-      }
-    } catch (error) {
-      console.error("Playback error:", error);
-      alert("再生エラーが発生しました");
-    }
-  };
-
-  // デバイスIDを明示的に指定した再生を試す
-  const tryPlaybackWithDeviceId = async () => {
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            uris: ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh"],
-          }),
-        }
-      );
-
-      if (!response.ok) {
         const errorText = await response.text();
-        console.error(
-          "Alternative playback failed:",
-          response.status,
-          errorText
-        );
-        alert(
-          `再生に失敗しました（代替方法）: ${response.status} ${errorText}`
-        );
-      } else {
-        console.log("Alternative playback started successfully");
-        alert("再生を開始しました（代替方法）！");
+        console.error("再生エラー:", response.status, errorText);
+        alert(`再生に失敗しました: ${response.status}`);
       }
     } catch (error) {
-      console.error("Alternative playback error:", error);
-      alert("代替再生方法でもエラーが発生しました");
+      console.error("再生エラー:", error);
+      alert("再生エラーが発生しました");
     }
   };
 
@@ -233,9 +99,11 @@ const MusicControls = () => {
           <>
             <div className={styles.albumArt}>
               {currentTrack.album?.images?.[0] && (
-                <img
+                <Image
                   src={currentTrack.album.images[0].url}
                   alt={currentTrack.album.name}
+                  width={80}
+                  height={80}
                 />
               )}
             </div>
