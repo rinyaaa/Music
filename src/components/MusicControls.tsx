@@ -48,7 +48,6 @@ const MusicControls = () => {
     }
   };
 
-  // テスト再生機能
   const playTestPlaylist = async () => {
     if (!accessToken || !deviceId) {
       alert("Spotifyに接続してデバイスを設定してください");
@@ -56,7 +55,6 @@ const MusicControls = () => {
     }
 
     try {
-      // デバイス指定で直接再生
       const response = await fetch(
         `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
         {
@@ -66,7 +64,7 @@ const MusicControls = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            uris: ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh"], // Never Gonna Give You Up
+            uris: ["spotify:track:4bfb4f6256e74356"],
           }),
         }
       );

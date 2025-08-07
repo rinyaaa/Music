@@ -52,7 +52,6 @@ const SpotifyPlayer = () => {
 
   const playerRef = useRef<SpotifyPlayer | null>(null);
 
-  // デバイスをアクティブにする関数
   const activateDevice = async (deviceId: string, accessToken: string) => {
     try {
       console.log("Activating device:", deviceId);
@@ -82,11 +81,9 @@ const SpotifyPlayer = () => {
   useEffect(() => {
     if (!accessToken) return;
 
-    // Spotify Web Playback SDKのスクリプトを動的に読み込み
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
     script.async = true;
-
     document.body.appendChild(script);
 
     window.onSpotifyWebPlaybackSDKReady = () => {
@@ -103,7 +100,6 @@ const SpotifyPlayer = () => {
       setPlayer(spotifyPlayer);
       playerRef.current = spotifyPlayer;
 
-      // エラーハンドリング
       spotifyPlayer.addListener("initialization_error", (data) => {
         const errorData = data as { message: string };
         console.error("Failed to initialize:", errorData.message);
@@ -126,7 +122,6 @@ const SpotifyPlayer = () => {
         console.error("Failed to perform playback:", errorData.message);
       });
 
-      // 再生状態の変更を監視
       spotifyPlayer.addListener("player_state_changed", (data) => {
         const state = data as {
           track_window: { current_track: SpotifyTrack };
@@ -138,26 +133,22 @@ const SpotifyPlayer = () => {
         setIsPlaying(!state.paused);
       });
 
-      // Ready状態の監視
       spotifyPlayer.addListener("ready", (data) => {
         const readyData = data as { device_id: string };
         console.log("Ready with Device ID", readyData.device_id);
         setDeviceId(readyData.device_id);
         setIsSDKReady(true);
 
-        // デバイスを自動的にアクティブにする
         if (accessToken) {
           activateDevice(readyData.device_id, accessToken);
         }
       });
 
-      // Not Ready状態の監視
       spotifyPlayer.addListener("not_ready", (data) => {
         const notReadyData = data as { device_id: string };
         console.log("Device ID has gone offline:", notReadyData.device_id);
       });
 
-      // プレイヤーを接続
       spotifyPlayer.connect();
     };
 

@@ -7,7 +7,6 @@ const SpotifyAuth = () => {
   const { accessToken, setAccessToken } = useSpotifyStore();
 
   useEffect(() => {
-    // ページ読み込み時にlocalStorageからトークンを復元
     const savedToken = localStorage.getItem("spotify_access_token");
     if (savedToken && !accessToken) {
       setAccessToken(savedToken);
@@ -18,12 +17,10 @@ const SpotifyAuth = () => {
     const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
     const redirectUri = "http://127.0.0.1:3000/callback";
 
-    // PKCE用のコードチャレンジを生成
     const codeVerifier = generateRandomString(64);
     const hashed = await sha256(codeVerifier);
     const codeChallenge = base64encode(hashed);
 
-    // localStorageにcode_verifierを保存（callback時に使用）
     localStorage.setItem("code_verifier", codeVerifier);
 
     const scopes = [

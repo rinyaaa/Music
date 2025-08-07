@@ -41,7 +41,7 @@ export default function CallbackPage() {
           if (data.refresh_token) {
             localStorage.setItem("spotify_refresh_token", data.refresh_token);
           }
-          localStorage.removeItem("code_verifier"); // クリーンアップ
+          localStorage.removeItem("code_verifier");
           router.push("/");
         } else {
           console.error("No access token received");
@@ -75,7 +75,6 @@ export default function CallbackPage() {
         code.substring(0, 20) + "..."
       );
 
-      // Code Verifierを取得
       const codeVerifier = localStorage.getItem("code_verifier");
       if (!codeVerifier) {
         console.error("Code verifier not found");
@@ -83,7 +82,6 @@ export default function CallbackPage() {
         return;
       }
 
-      // Authorization CodeをAccess Tokenに交換
       exchangeCodeForToken(code, codeVerifier);
     } else {
       console.log("No authorization code found");
