@@ -64,7 +64,7 @@ const MusicControls = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            uris: ["spotify:track:4bfb4f6256e74356"],
+            uris: ["spotify:track:7qiZfU4dY1lWllzX7mPBI3"],
           }),
         }
       );
