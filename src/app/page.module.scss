@@ -1,94 +1,90 @@
 .page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2d1b0f 100%);
+  // 画像の紫色の背景に変更
+  background:linear-gradient(135deg,#d0bffc,#361e71 );
   color: white;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  text-shadow: 2px #4a3a9a;
+  // font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  // コンテンツをページの中央に配置
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
 
-.header {
-  text-align: center;
-  padding: 2rem 1rem;
-
-  h1 {
-    font-size: 2.5rem;
-    margin: 0 0 0.5rem 0;
-    background: linear-gradient(45deg, #1db954, #1ed760, #ff6b35);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 700;
-  }
-
-  p {
-    font-size: 1.2rem;
-    margin: 0;
-    opacity: 0.8;
-  }
-}
-
-.main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem 2rem;
+// 全体を囲むコンテナ
+.container {
+  width: 100%;
+  max-width: 600px;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.instructions {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 2rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+// "Gesture Audio" タイトルのスタイル
+.header {
+  text-align: center;
 
-  h2 {
-    color: #1db954;
-    margin-top: 0;
-    margin-bottom: 1rem;
+  h1 {
+    // フォントや正確なデザインはカスタムフォントやSVGが必要なため、近いスタイルで再現
+    font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', sans-serif;
+    font-size: 3.5rem;
+    color: #8a7de0; // 紫色のテキスト
+    margin: 0;
+    // 白い縁取りをtext-shadowで表現
+    text-shadow: 
+      -2px -2px 0 #fff,  
+       2px -2px 0 #fff,
+      -2px  2px 0 #fff,
+       2px  2px 0 #fff;
   }
 
-  ol {
-    line-height: 1.6;
-    margin-bottom: 2rem;
+  p {
+    font-size: 1.25rem;
+    margin-top: 0.5rem;
+    opacity: 0.9;
+  }
+}
 
-    li {
-      margin-bottom: 0.5rem;
+// オレンジ色のログインボックスのスタイル
+.loginBox {
+  background: linear-gradient(135deg, #ffa569, #a94b0d);
+  border-radius: 20px;
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  
+  p {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+
+    // "Spotifyにログインしてください" の部分
+    &:last-of-type {
+      margin-bottom: 2rem;
     }
   }
 }
 
-.features {
-  h3 {
-    color: #ff6b35;
-    margin-bottom: 1rem;
-  }
+// ロゴのスタイルを定義
+.logo {
+  /* ロゴの最大の横幅を700pxに指定 */
+  max-width: 700px; 
+  
+  /* 親要素の幅に合わせて、横幅を100%にする（スマホなどで画面が狭くなった時に縮小させるため） */
+  width: 100%;
 
-  ul {
-    list-style: none;
-    padding: 0;
-
-    li {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-  }
+  /* 高さは自動で調整させることで、画像の縦横比を維持する */
+  height: auto; 
 }
 
+// スマートフォン用のレスポンシブデザイン
 @media (max-width: 768px) {
   .header h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
-
-  .main {
-    padding: 0 0.5rem 2rem;
-  }
-
-  .instructions {
+  .loginBox {
     padding: 1.5rem;
   }
 }
