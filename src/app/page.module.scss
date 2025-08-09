@@ -1,15 +1,17 @@
 .page {
   min-height: 100vh;
   // 画像の紫色の背景に変更
-  background:linear-gradient(135deg,#d0bffc,#361e71 );
+  background: linear-gradient(135deg, #d0bffc, #361e71);
   color: white;
   text-shadow: 2px #4a3a9a;
   // font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  
+
   // コンテンツをページの中央に配置
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2rem;
   padding: 1rem;
 }
 
@@ -28,16 +30,13 @@
 
   h1 {
     // フォントや正確なデザインはカスタムフォントやSVGが必要なため、近いスタイルで再現
-    font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', sans-serif;
+    font-family: "Arial Rounded MT Bold", "Helvetica Rounded", sans-serif;
     font-size: 3.5rem;
     color: #8a7de0; // 紫色のテキスト
     margin: 0;
     // 白い縁取りをtext-shadowで表現
-    text-shadow: 
-      -2px -2px 0 #fff,  
-       2px -2px 0 #fff,
-      -2px  2px 0 #fff,
-       2px  2px 0 #fff;
+    text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff,
+      2px 2px 0 #fff;
   }
 
   p {
@@ -54,7 +53,7 @@
   padding: 2.5rem;
   text-align: center;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-  
+
   p {
     margin: 0 0 0.5rem 0;
     font-size: 1.1rem;
@@ -70,13 +69,13 @@
 // ロゴのスタイルを定義
 .logo {
   /* ロゴの最大の横幅を700pxに指定 */
-  max-width: 700px; 
-  
+  max-width: 700px;
+
   /* 親要素の幅に合わせて、横幅を100%にする（スマホなどで画面が狭くなった時に縮小させるため） */
   width: 100%;
 
   /* 高さは自動で調整させることで、画像の縦横比を維持する */
-  height: auto; 
+  height: auto;
 }
 
 // スマートフォン用のレスポンシブデザイン
