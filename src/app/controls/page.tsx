@@ -1,6 +1,5 @@
 "use client";
 
-import SpotifyPlayer from "../../components/SpotifyPlayer";
 import MusicControls from "../../components/MusicControls";
 import { useSpotifyStore } from "../../store/spotify";
 import { useRouter } from "next/navigation";
@@ -43,7 +42,6 @@ export default function ControlsPage() {
       </header>
 
       <main className={styles.main}>
-        <SpotifyPlayer />
         <MusicControls />
       </main>
     </div>

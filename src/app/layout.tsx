@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 // 1. Noto Sans JPをインポート
-import {Dela_Gothic_One } from "next/font/google";
+import { Dela_Gothic_One } from "next/font/google";
 import "./globals.css";
+import SpotifyPlayer from "@/components/SpotifyPlayer";
 
 // 2. フォントを設定（太さやサブセットなどを指定）
 const delaGothicOne = Dela_Gothic_One({
   subsets: ["latin"],
-  weight: "400", 
+  weight: "400",
   display: "swap", // フォント読み込み中のちらつきを防止
 });
 
@@ -23,7 +24,11 @@ export default function RootLayout({
   return (
     // 3. classNameをhtmlタグに適用
     <html lang="ja" className={delaGothicOne.className}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* グローバルでSpotifyを管理する場合 */}
+        <SpotifyPlayer />
+      </body>
     </html>
   );
 }
