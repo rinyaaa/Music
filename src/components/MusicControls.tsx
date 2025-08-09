@@ -22,6 +22,7 @@ const MusicControls = () => {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string>("");
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
 
   // プレイリスト一覧を取得
   const fetchPlaylists = useCallback(async () => {
@@ -37,11 +38,59 @@ const MusicControls = () => {
       if (response.ok) {
         const data = await response.json();
         setPlaylists(data.items);
+        setHighlightedIndex(0); // プレイリストを取得したら最初のアイテムをハイライト
       }
     } catch (error) {
       console.error("プレイリスト取得エラー:", error);
     }
   }, [accessToken]);
+
+  // プレイリストを選択してモーダルを閉じる
+  const selectPlaylist = useCallback(
+    async (playlistId: string) => {
+      setSelectedPlaylist(playlistId);
+      setShowPlaylistModal(false);
+
+      // プレイリスト選択後、自動で再生を開始
+      if (playlistId && accessToken && deviceId) {
+        try {
+          await fetch(
+            `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                context_uri: `spotify:playlist:${playlistId}`,
+              }),
+            }
+          );
+        } catch (error) {
+          console.error("再生エラー:", error);
+          alert("再生エラーが発生しました");
+        }
+      }
+    },
+    [accessToken, deviceId]
+  );
+
+  const navigatePrevious = useCallback(() => {
+    if (playlists.length === 0) return;
+    setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : playlists.length - 1));
+  }, [playlists.length]);
+
+  const navigateNext = useCallback(() => {
+    if (playlists.length === 0) return;
+    setHighlightedIndex((prev) => (prev < playlists.length - 1 ? prev + 1 : 0));
+  }, [playlists.length]);
+
+  const selectHighlighted = useCallback(() => {
+    if (playlists.length > 0 && playlists[highlightedIndex]) {
+      selectPlaylist(playlists[highlightedIndex].id);
+    }
+  }, [playlists, highlightedIndex, selectPlaylist]);
 
   // コンポーネントマウント時にプレイリストを取得
   useEffect(() => {
@@ -50,33 +99,35 @@ const MusicControls = () => {
     }
   }, [accessToken, fetchPlaylists]);
 
-  // プレイリストを選択してモーダルを閉じる
-  const selectPlaylist = async (playlistId: string) => {
-    setSelectedPlaylist(playlistId);
-    setShowPlaylistModal(false);
+  // キーボードナビゲーション
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (!showPlaylistModal) return;
 
-    // プレイリスト選択後、自動で再生を開始
-    if (playlistId && accessToken && deviceId) {
-      try {
-        await fetch(
-          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              context_uri: `spotify:playlist:${playlistId}`,
-            }),
-          }
-        );
-      } catch (error) {
-        console.error("再生エラー:", error);
-        alert("再生エラーが発生しました");
+      switch (event.key) {
+        case "ArrowLeft":
+          event.preventDefault();
+          navigatePrevious();
+          break;
+        case "ArrowRight":
+          event.preventDefault();
+          navigateNext();
+          break;
+        case "Enter":
+        case " ":
+          event.preventDefault();
+          selectHighlighted();
+          break;
+        case "Escape":
+          event.preventDefault();
+          setShowPlaylistModal(false);
+          break;
       }
-    }
-  };
+    };
+
+    document.addEventListener("keydown", handleKeyPress);
+    return () => document.removeEventListener("keydown", handleKeyPress);
+  }, [showPlaylistModal, navigatePrevious, navigateNext, selectHighlighted]);
 
   // 全てSpotify Web APIで統一
   const togglePlayPause = async () => {
@@ -164,8 +215,8 @@ const MusicControls = () => {
                 <Image
                   src={currentTrack.album.images[0].url}
                   alt={currentTrack.album.name}
-                  width={80}
-                  height={80}
+                  width={500}
+                  height={500}
                 />
               )}
             </div>
@@ -231,13 +282,16 @@ const MusicControls = () => {
             >
               <div className={styles.playlistGrid}>
                 {/* ユーザーのプレイリスト */}
-                {playlists.map((playlist) => (
+                {playlists.map((playlist, index) => (
                   <div
                     key={playlist.id}
                     className={`${styles.playlistCard} ${
                       selectedPlaylist === playlist.id ? styles.selected : ""
-                    }`}
-                    onClick={() => selectPlaylist(playlist.id)}
+                    } ${highlightedIndex === index ? styles.highlighted : ""}`}
+                    onClick={() => {
+                      setHighlightedIndex(index);
+                      selectPlaylist(playlist.id);
+                    }}
                   >
                     <div className={styles.playlistIcon}>
                       {playlist.images?.[0] ? (
@@ -258,6 +312,20 @@ const MusicControls = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className={styles.navigationControls}>
+                <button onClick={navigatePrevious} className={styles.navButton}>
+                  前へ
+                </button>
+                <button
+                  onClick={selectHighlighted}
+                  className={styles.selectButton}
+                >
+                  決定
+                </button>
+                <button onClick={navigateNext} className={styles.navButton}>
+                  次へ
+                </button>
               </div>
             </div>
           </div>
