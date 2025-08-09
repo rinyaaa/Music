@@ -10,6 +10,7 @@
   color: white;
   text-align: center;
   margin: 1rem 0;
+  
 
   h2 {
     margin-bottom: 1rem;
@@ -25,8 +26,8 @@
 }
 
 .loginButton {
-  background: #1db954;
-  color: white;
+  background: white;
+  color: orange;
   border: none;
   padding: 12px 24px;
   border-radius: 25px;
@@ -34,9 +35,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+   font-family: inherit;
 
   &:hover {
-    background: #1ed760;
+    background: #fff;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
   }
