@@ -9,8 +9,15 @@ import IconDown from "@/assets/down.svg";
 import IconLeft from "@/assets/left.svg";
 import IconRight from "@/assets/right.svg";
 import IconUp from "@/assets/up.svg";
+import musicIcon from "@/assets/music.svg"; // 音楽アイコン
+import music1Icon from "@/assets/music1.svg"; // 音楽アイコン1
+import music2Icon from "@/assets/music2.svg"; // 音楽アイコン2
+import music3Icon from "@/assets/music3.svg"; // 音楽アイコン3
+import backIcon from "@/assets/back.svg"; // 戻るボタンのアイコン
+import rightHuman from "@/assets/rightHuman.svg"; // 戻るボタンのアイコン
+import leftHuman from "@/assets/leftHuman.svg"; // 戻るボタンのアイコン
 import type { AccelSample } from "@/lib/xiaoBle";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface Playlist {
   id: string;
@@ -33,6 +40,23 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   const [selectedPlaylist, setSelectedPlaylist] = useState<string>("");
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlay, setIsPlay] = useState(false);
+  const [currentAudio, setCurrentAudio] = useState("/audio/a.mp3");
+  const [showMusicIcon, setShowMusicIcon] = useState(false);
+  const [currentMusicIcon, setCurrentMusicIcon] = useState(musicIcon);
+  const [multipleIcons, setMultipleIcons] = useState<
+    Array<{
+      id: number;
+      icon: string;
+      x: number;
+      y: number;
+    }>
+  >([]);
+  const pathname = usePathname();
+
+  const hideOn = ["/controls"];
+  const controlsShow = hideOn.includes(pathname);
 
   /* ========== Spotify API ========== */
   const fetchPlaylists = useCallback(async () => {
@@ -182,13 +206,13 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
 
   // ====== 固定パラメータ（script.js と同値） ======
   const CFG = {
-    TH_HI: 0.45,          // g
-    TH_LO: 0.25,          // g
-    HPF_FC: 2.3,          // Hz
-    LPF_FC: 0.5,          // Hz
-    UD_SCALE: 2.2,        // 上下の閾値強化
-    UD_DOM: 1.8,          // 縦優位: |fvert| >= UD_DOM * |fx|
-    UD_REFRACT_MS: 600,   // UD検出後のリフラクト
+    TH_HI: 0.45, // g
+    TH_LO: 0.25, // g
+    HPF_FC: 2.3, // Hz
+    LPF_FC: 0.5, // Hz
+    UD_SCALE: 2.2, // 上下の閾値強化
+    UD_DOM: 1.8, // 縦優位: |fvert| >= UD_DOM * |fx|
+    UD_REFRACT_MS: 600, // UD検出後のリフラクト
     AXIS_COOLDOWN_MS: 500,
     MUTUAL_BLOCK_MS: 350,
     UD_TO_LR_BLOCK_MS: 300,
@@ -201,10 +225,12 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   function makeHPF(fc: number) {
     const RC = 1 / (2 * Math.PI * fc);
     const alpha = RC / (RC + SAMPLE_DT);
-    let yPrev = 0, xPrev = 0;
+    let yPrev = 0,
+      xPrev = 0;
     return (x: number) => {
       const y = alpha * (yPrev + x - xPrev);
-      yPrev = y; xPrev = x;
+      yPrev = y;
+      xPrev = x;
       return y;
     };
   }
@@ -212,7 +238,10 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     const RC = 1 / (2 * Math.PI * fc);
     const alpha = SAMPLE_DT / (RC + SAMPLE_DT);
     let y = 0;
-    return (x: number) => { y = y + alpha * (x - y); return y; };
+    return (x: number) => {
+      y = y + alpha * (x - y);
+      return y;
+    };
   }
 
   // HPF/LPF（X,Y,Z）＋ 縦成分用HPF
@@ -222,19 +251,28 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   const lpfXproc = useRef(makeLPF(CFG.LPF_FC));
   const lpfYproc = useRef(makeLPF(CFG.LPF_FC));
   const lpfZproc = useRef(makeLPF(CFG.LPF_FC));
-  const hpfVert  = useRef(makeHPF(CFG.HPF_FC));
+  const hpfVert = useRef(makeHPF(CFG.HPF_FC));
 
   // ====== 汎用検出器（script.js の makeDetector と同等） ======
-  function makeDetector(onPos: () => void, onNeg: () => void, opts?: {
-    TH_HI?: number; TH_LO?: number; REFRACT_MS?: number;
-  }) {
+  function makeDetector(
+    onPos: () => void,
+    onNeg: () => void,
+    opts?: {
+      TH_HI?: number;
+      TH_LO?: number;
+      REFRACT_MS?: number;
+    }
+  ) {
     const TH_HI = opts?.TH_HI ?? CFG.TH_HI;
     const TH_LO = opts?.TH_LO ?? CFG.TH_LO;
     const REFRACT_MS = opts?.REFRACT_MS ?? 350;
-    const MIN_MS = 100, MAX_MS = 900;
+    const MIN_MS = 100,
+      MAX_MS = 900;
 
     let state: "idle" | "tracking" = "idle";
-    let startTs = 0, firstSign = 0, crossedZero = false;
+    let startTs = 0,
+      firstSign = 0,
+      crossedZero = false;
     let lastDir: "POS" | "NEG" | null = null;
     let lastDirTs = 0;
 
@@ -245,30 +283,32 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
 
       switch (state) {
         case "idle":
-          if (ax > TH_HI && (now - lastDirTs) > REFRACT_MS) {
+          if (ax > TH_HI && now - lastDirTs > REFRACT_MS) {
             state = "tracking";
             startTs = now;
-            firstSign = (sg !== 0) ? sg : (x >= 0 ? 1 : -1);
+            firstSign = sg !== 0 ? sg : x >= 0 ? 1 : -1;
             crossedZero = false;
           }
           break;
 
         case "tracking":
-          if ((sg !== 0) && (sg !== firstSign)) crossedZero = true;
+          if (sg !== 0 && sg !== firstSign) crossedZero = true;
 
-          if (ax < TH_LO && (now - startTs) > MIN_MS) {
+          if (ax < TH_LO && now - startTs > MIN_MS) {
             const dur = now - startTs;
             if (dur < MAX_MS && crossedZero) {
-              const dir: "POS" | "NEG" = (firstSign > 0) ? "POS" : "NEG";
-              if (dir !== lastDir || (now - lastDirTs) > REFRACT_MS) {
-                if (dir === "POS") onPos(); else onNeg();
-                lastDir = dir; lastDirTs = now;
+              const dir: "POS" | "NEG" = firstSign > 0 ? "POS" : "NEG";
+              if (dir !== lastDir || now - lastDirTs > REFRACT_MS) {
+                if (dir === "POS") onPos();
+                else onNeg();
+                lastDir = dir;
+                lastDirTs = now;
               }
             }
             state = "idle";
           }
 
-          if ((now - startTs) > MAX_MS) state = "idle";
+          if (now - startTs > MAX_MS) state = "idle";
           break;
       }
     };
@@ -300,20 +340,20 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     lastLRts.current = nowMs();
     // console.log("Right");
   };
-  const onLeft  = () => {
+  const onLeft = () => {
     setLastGesture("Left");
     skipToPrevious();
     lastLRts.current = nowMs();
     // console.log("Left");
   };
-  const onUp    = () => {
+  const onUp = () => {
     setLastGesture("Up");
     togglePlayPause();
     lastUDts.current = nowMs();
     freezeUntilTs.current = lastUDts.current + CFG.POST_UD_FREEZE_MS; // 直後フリーズ
     // console.log("Up");
   };
-  const onDown  = () => {
+  const onDown = () => {
     setLastGesture("Down");
     setShowPlaylistModal(true);
     lastUDts.current = nowMs();
@@ -325,30 +365,85 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   const detectUD = useRef(makeDetectorUD(onUp, onDown));
 
   // ====== 重力軸の決定（script.js 同等） ======
-  const upDownAxis = useRef<"x"|"y"|"z">("z");
-  const gravMaxAxis = useRef<"-"|"x"|"y"|"z">("-");
+  const upDownAxis = useRef<"x" | "y" | "z">("z");
+  const gravMaxAxis = useRef<"-" | "x" | "y" | "z">("-");
   const lastAxisChangeTs = useRef(0);
 
   function decideUpDownAxis(gx: number, gy: number, gz: number) {
-    const aX = Math.abs(gx), aY = Math.abs(gy), aZ = Math.abs(gz);
-    let maxA = aX, maxAxis: "x"|"y"|"z" = "x";
-    if (aY > maxA) { maxA = aY; maxAxis = "y"; }
-    if (aZ > maxA) { maxA = aZ; maxAxis = "z"; }
+    const aX = Math.abs(gx),
+      aY = Math.abs(gy),
+      aZ = Math.abs(gz);
+    let maxA = aX,
+      maxAxis: "x" | "y" | "z" = "x";
+    if (aY > maxA) {
+      maxA = aY;
+      maxAxis = "y";
+    }
+    if (aZ > maxA) {
+      maxA = aZ;
+      maxAxis = "z";
+    }
     if (maxA >= 0.6) {
       const prev = upDownAxis.current;
       if (maxAxis === "z") upDownAxis.current = "y";
       else if (maxAxis === "y") upDownAxis.current = "z";
       gravMaxAxis.current = maxAxis;
-      if (upDownAxis.current !== prev) lastAxisChangeTs.current = performance.now();
+      if (upDownAxis.current !== prev)
+        lastAxisChangeTs.current = performance.now();
     }
   }
+
+  const playMP3 = (audioFile: string) => {
+    if (audioRef.current) {
+      if (audioFile) {
+        audioRef.current.src = audioFile;
+        setCurrentAudio(audioFile);
+
+        // ちょっと待ってから再生（ファイル変更のため）
+        setTimeout(() => {
+          console.log("Playing audio:", audioFile);
+          if (audioRef.current) {
+            audioRef.current.play();
+            setIsPlay(true);
+          }
+        }, 100);
+      } else {
+        if (isPlay) {
+          audioRef.current.pause();
+          setIsPlay(false);
+        } else {
+          audioRef.current.play();
+          setIsPlay(true);
+        }
+      }
+    }
+  };
+
+  const showRandomIcons = () => {
+    // 4つのアイコンをランダムな位置に配置
+    const icons = [musicIcon, music1Icon, music2Icon, music3Icon];
+    const newIcons = icons.map((icon, index) => ({
+      id: index,
+      icon: icon,
+      x: Math.random() * 70 + 10, // 10%から80%の範囲でランダム
+      y: Math.random() * 70 + 10, // 10%から80%の範囲でランダム
+    }));
+
+    setMultipleIcons(newIcons);
+
+    setTimeout(() => {
+      setMultipleIcons([]);
+    }, 1500);
+  };
 
   // ====== メイン判定 ======
   useEffect(() => {
     if (!sample) return;
 
     // 入力
-    const ax = sample.ax, ay = sample.ay, az = sample.az;
+    const ax = sample.ax,
+      ay = sample.ay,
+      az = sample.az;
 
     // LPF（重力推定）
     const gx = lpfXproc.current(ax);
@@ -365,7 +460,9 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     const gmag = Math.hypot(gx, gy, gz);
     let fvert = 0;
     if (gmag > 0.2) {
-      const nx = gx / gmag, ny = gy / gmag, nz = gz / gmag;
+      const nx = gx / gmag,
+        ny = gy / gmag,
+        nz = gz / gmag;
       const avert = ax * nx + ay * ny + az * nz;
       fvert = hpfVert.current(avert);
     }
@@ -374,7 +471,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
 
     // UD直後フリーズ
     if (now < freezeUntilTs.current) {
-      detectLR.current(0); detectUD.current(0);
+      detectLR.current(0);
+      detectUD.current(0);
       const reason = `freeze (${Math.round(freezeUntilTs.current - now)}ms)`;
       if (lastReasonRef.current !== reason) {
         lastReasonRef.current = reason;
@@ -384,7 +482,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     }
 
     // 左右（UD直後のブロック）
-    const udToLRBlocked = (now - lastUDts.current) < CFG.UD_TO_LR_BLOCK_MS;
+    const udToLRBlocked = now - lastUDts.current < CFG.UD_TO_LR_BLOCK_MS;
     if (!udToLRBlocked) {
       detectLR.current(fx); // ※ script.js 準拠：左右= X軸HPF
     } else {
@@ -392,10 +490,10 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     }
 
     // 上下（優位条件など）
-    const dominanceOK = Math.abs(fvert) > (CFG.UD_DOM * Math.abs(fx));
-    const axisOK   = (now - lastAxisChangeTs.current) > CFG.AXIS_COOLDOWN_MS;
-    const mutualOK = (now - lastLRts.current) > CFG.MUTUAL_BLOCK_MS;
-    const amplitudeOK = Math.abs(fvert) > (CFG.TH_LO * CFG.UD_SCALE * 0.8);
+    const dominanceOK = Math.abs(fvert) > CFG.UD_DOM * Math.abs(fx);
+    const axisOK = now - lastAxisChangeTs.current > CFG.AXIS_COOLDOWN_MS;
+    const mutualOK = now - lastLRts.current > CFG.MUTUAL_BLOCK_MS;
+    const amplitudeOK = Math.abs(fvert) > CFG.TH_LO * CFG.UD_SCALE * 0.8;
 
     if (axisOK && mutualOK && dominanceOK && amplitudeOK) {
       detectUD.current(fvert);
@@ -406,13 +504,17 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     } else {
       detectUD.current(0);
       // いま発火しない主因を簡潔に表示
-      const reason =
-        !axisOK ? "axis-cooldown" :
-        !mutualOK ? "mutual-block(LR→UD)" :
-        udToLRBlocked ? "block(UD→LR)" :
-        !dominanceOK ? "dominance NG (|fvert|≦k|fx|)" :
-        !amplitudeOK ? "amplitude NG" :
-        "-";
+      const reason = !axisOK
+        ? "axis-cooldown"
+        : !mutualOK
+        ? "mutual-block(LR→UD)"
+        : udToLRBlocked
+        ? "block(UD→LR)"
+        : !dominanceOK
+        ? "dominance NG (|fvert|≦k|fx|)"
+        : !amplitudeOK
+        ? "amplitude NG"
+        : "-";
       if (lastReasonRef.current !== reason) {
         lastReasonRef.current = reason;
         setLastReason(reason);
@@ -429,24 +531,72 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     );
   }
 
+  const handleButtonClick = (audioFile: string) => () => {
+    // ボタンクリック時の処理
+    playMP3(audioFile);
+    showRandomIcons();
+  };
+
   return (
     <div className={styles.controlsContainer}>
+      {/* 音楽アイコンのオーバーレイ */}
+      {showMusicIcon && (
+        <div className={styles.musicIconOverlay}>
+          <Image
+            src={currentMusicIcon}
+            alt="Music Playing"
+            width={120}
+            height={120}
+            className={styles.musicIcon}
+          />
+        </div>
+      )}
+
+      {/* 複数のランダムアイコンのオーバーレイ */}
+      {multipleIcons.map((iconData) => (
+        <div
+          key={iconData.id}
+          className={styles.musicIconOverlay}
+          style={{
+            left: `${iconData.x}%`,
+            top: `${iconData.y}%`,
+            position: "fixed",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <Image
+            src={iconData.icon}
+            alt="Music Icon"
+            width={120}
+            height={120}
+            className={styles.musicIcon}
+          />
+        </div>
+      ))}
 
       {/* ★ 最小可視化（右上に表示） */}
-      <div style={{
-        position: "fixed",
-        top: 8,
-        right: 8,
-        background: "rgba(0,0,0,0.6)",
-        color: "#fff",
-        padding: "6px 10px",
-        borderRadius: 8,
-        fontSize: 14,
-        zIndex: 1000,
-      }}>
-        <div><b>Last Gesture:</b> {lastGesture}</div>
-        <div style={{ opacity: 0.9 }}><b>Reason:</b> {lastReason}</div>
-        {typeof status === "string" && <div style={{ opacity: 0.7 }}>BLE: {status}</div>}
+      <div
+        style={{
+          position: "fixed",
+          top: 8,
+          right: 8,
+          background: "rgba(0,0,0,0.6)",
+          color: "#fff",
+          padding: "6px 10px",
+          borderRadius: 8,
+          fontSize: 14,
+          zIndex: 1000,
+        }}
+      >
+        <div>
+          <b>Last Gesture:</b> {lastGesture}
+        </div>
+        <div style={{ opacity: 0.9 }}>
+          <b>Reason:</b> {lastReason}
+        </div>
+        {typeof status === "string" && (
+          <div style={{ opacity: 0.7 }}>BLE: {status}</div>
+        )}
       </div>
 
       <div className={styles.trackInfo}>
@@ -479,52 +629,120 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
       </div>
 
       {/* 既存 onClick はそのまま残す */}
-      <div className={styles.controls}>
-        <button onClick={skipToPrevious} className={styles.navButton}>
-          <Image src={IconLeft} alt="Previous" width={60} height={60} />
-          <br />
-          Back
-        </button>
-        <button onClick={togglePlayPause} className={styles.selectButton}>
-          <span>
-            {isPlaying ? (
-              <>
-                <Image src={IconDown} alt="Pause" width={80} height={80} />
-                <br />
-                Pause
-              </>
-            ) : (
-              <>
-                <Image src={IconUp} alt="Play" width={80} height={80} />
-                <br />
-                Play
-              </>
-            )}
-          </span>
-        </button>
-        <button onClick={skipToNext} className={styles.navButton}>
-          <Image src={IconRight} alt="Next" width={60} height={60} />
-          <br />
-          Next
-        </button>
-      </div>
+      {controlsShow ? (
+        <>
+          <div className={styles.controls}>
+            <button onClick={skipToPrevious} className={styles.navButton}>
+              <Image src={IconLeft} alt="Previous" width={60} height={60} />
+              <br />
+              Back
+            </button>
+            <button onClick={togglePlayPause} className={styles.selectButton}>
+              <span>
+                {isPlaying ? (
+                  <>
+                    <Image src={IconDown} alt="Pause" width={80} height={80} />
+                    <br />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Image src={IconUp} alt="Play" width={80} height={80} />
+                    <br />
+                    Play
+                  </>
+                )}
+              </span>
+            </button>
+            <button onClick={skipToNext} className={styles.navButton}>
+              <Image src={IconRight} alt="Next" width={60} height={60} />
+              <br />
+              Next
+            </button>
+          </div>
 
-      <div className={styles.testControls}>
-        <div className={styles.playlistSelector}>
-          <button
-            onClick={() => setShowPlaylistModal(true)}
-            className={styles.testButton}
-          >
-            うでを下に振ってプレイリスト選択に戻る
-          </button>
-          <button
-            onClick={() => router.push("/music")}
-            className={styles.testButton}
-          >
-            次の画面へ
-          </button>
-        </div>
-      </div>
+          <div className={styles.testControls}>
+            <div className={styles.playlistSelector}>
+              <button
+                onClick={() => setShowPlaylistModal(true)}
+                className={styles.testButton}
+              >
+                うでを下に振ってプレイリスト選択に戻る
+              </button>
+              <button
+                onClick={() => router.push("/music")}
+                className={styles.testButton}
+              >
+                次の画面へ
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={styles.controls}>
+            <button
+              className={styles.testButton}
+              onClick={handleButtonClick("/audio/a.mp3")}
+            >
+              音声A
+            </button>
+            <button
+              className={styles.testButton}
+              onClick={handleButtonClick("/audio/e.mp3")}
+            >
+              音声E
+            </button>
+            <button
+              className={styles.testButton}
+              onClick={handleButtonClick("/audio/i.mp3")}
+            >
+              音声I
+            </button>
+            <button
+              className={styles.testButton}
+              onClick={handleButtonClick("/audio/u.mp3")}
+            >
+              音声U
+            </button>
+
+            {/* MP3再生用のaudio要素 */}
+            <audio
+              ref={audioRef}
+              onEnded={() => setIsPlay(false)}
+              onPause={() => setIsPlay(false)}
+              onPlay={() => setIsPlay(true)}
+              src={currentAudio}
+            >
+              お使いのブラウザはHTML5 audioに対応していません。
+            </audio>
+          </div>
+          <div className={styles.backButtonContainer}>
+            <Image
+              src={rightHuman}
+              alt="Select Playlist"
+              width={100}
+              height={100}
+              className={styles.backButton}
+            />
+            <Image
+              src={backIcon}
+              alt="Select Playlist"
+              width={100}
+              height={100}
+              className={styles.backButton}
+              onClick={() => router.push("/controls")}
+            />
+            <Image
+              src={leftHuman}
+              alt="Select Playlist"
+              width={100}
+              height={100}
+              className={styles.backButton}
+            />
+          </div>
+        </>
+      )}
 
       {showPlaylistModal && (
         <div
@@ -551,8 +769,16 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
                   <div
                     key={playlist.id}
                     className={`${styles.playlistCard}
-                                ${selectedPlaylist === playlist.id ? styles.selected : ""}
-                                ${highlightedIndex === index ? styles.highlighted : ""}`}
+                                ${
+                                  selectedPlaylist === playlist.id
+                                    ? styles.selected
+                                    : ""
+                                }
+                                ${
+                                  highlightedIndex === index
+                                    ? styles.highlighted
+                                    : ""
+                                }`}
                     onClick={() => {
                       setHighlightedIndex(index);
                       selectPlaylist(playlist.id);
