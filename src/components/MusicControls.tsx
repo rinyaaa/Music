@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSpotifyStore } from "../store/spotify";
 import styles from "./MusicControls.module.scss";
 
@@ -9,11 +9,8 @@ import IconDown from "@/assets/down.svg";
 import IconLeft from "@/assets/left.svg";
 import IconRight from "@/assets/right.svg";
 import IconUp from "@/assets/up.svg";
-import { useRouter } from "next/navigation";
-import styles from "./MusicControls.module.scss";
-import { useSpotifyStore } from "../store/spotify";
 import type { AccelSample } from "@/lib/xiaoBle";
-
+import { useRouter } from "next/navigation";
 
 interface Playlist {
   id: string;
@@ -68,13 +65,18 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
               Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ context_uri: `spotify:playlist:${playlistId}` }),
+            body: JSON.stringify({
+              context_uri: `spotify:playlist:${playlistId}`,
+            }),
           }
         );
-        if (r.status === 401) return alert("認証が切れました。再ログインしてください。");
+        if (r.status === 401)
+          return alert("認証が切れました。再ログインしてください。");
         if (r.status === 403) return alert("この機能はプレミアム限定です。");
         if (r.status === 404)
-          return alert("アクティブなデバイスが見つかりません。Spotifyアプリで再生してください。");
+          return alert(
+            "アクティブなデバイスが見つかりません。Spotifyアプリで再生してください。"
+          );
         if (!(r.ok || r.status === 204)) {
           console.error("再生エラー:", r.status, await r.text());
           alert(`再生エラー (${r.status})`);
@@ -123,7 +125,9 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
       }
       if (r.status === 403) return alert("この機能はプレミアム限定です。");
       if (r.status === 404)
-        return alert("アクティブなデバイスが見つかりません。Spotifyアプリで再生してください。");
+        return alert(
+          "アクティブなデバイスが見つかりません。Spotifyアプリで再生してください。"
+        );
       if (!(r.ok || r.status === 204)) {
         console.error("API エラー:", r.status, await r.text());
         alert(`エラー (${r.status})`);
@@ -141,7 +145,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
         `https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`,
         { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      if (r.status === 401) return alert("認証が切れました。再ログインしてください。");
+      if (r.status === 401)
+        return alert("認証が切れました。再ログインしてください。");
       if (r.status === 403) return alert("この機能はプレミアム限定です。");
       if (!(r.ok || r.status === 204)) {
         console.error("Skip next エラー:", r.status);
@@ -160,7 +165,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
         `https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`,
         { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      if (r.status === 401) return alert("認証が切れました。再ログインしてください。");
+      if (r.status === 401)
+        return alert("認証が切れました。再ログインしてください。");
       if (r.status === 403) return alert("この機能はプレミアム限定です。");
       if (!(r.ok || r.status === 204)) {
         console.error("Skip previous エラー:", r.status);
@@ -175,12 +181,12 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   /* ========== ここから「元JS同等」の判定ロジック ========== */
 
   // 固定パラメータ（script.jsのスクショ準拠）
-  const TH_HI = 0.45;   // 発火しきい値 (g)
-  const TH_LO = 0.25;   // 解除しきい値 (g)
-  const HPF_FC = 2.3;   // HPFカットオフ (Hz)
-  const LPF_FC = 0.5;   // LPFカットオフ (Hz) …重力推定
+  const TH_HI = 0.45; // 発火しきい値 (g)
+  const TH_LO = 0.25; // 解除しきい値 (g)
+  const HPF_FC = 2.3; // HPFカットオフ (Hz)
+  const LPF_FC = 0.5; // LPFカットオフ (Hz) …重力推定
   const UD_SCALE = 2.2; // 上下強調
-  const UD_DOM = 1.8;   // 縦優位条件: |hx*UD_SCALE| >= UD_DOM * |hy|
+  const UD_DOM = 1.8; // 縦優位条件: |hx*UD_SCALE| >= UD_DOM * |hy|
   const UD_REFRACT_MS = 600; // 上下後ブロック時間
   const LR_REFRACT_MS = 600; // 左右後ブロック（相互ブロック対称に）
 
@@ -233,8 +239,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     const now = performance.now();
     if (now - lastUD.current < UD_REFRACT_MS) return;
 
-    if (dir > 0) skipToNext();     // RIGHT
-    else skipToPrevious();         // LEFT
+    if (dir > 0) skipToNext(); // RIGHT
+    else skipToPrevious(); // LEFT
     lastLR.current = now;
   };
 
@@ -342,7 +348,9 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
             </div>
           </>
         ) : (
-          <div className={styles.noTrack}><p>再生中の曲がありません</p></div>
+          <div className={styles.noTrack}>
+            <p>再生中の曲がありません</p>
+          </div>
         )}
       </div>
 
@@ -395,21 +403,40 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
       </div>
 
       {showPlaylistModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowPlaylistModal(false)}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowPlaylistModal(false)}
+        >
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3>プレイリストを選択</h3>
-              <button className={styles.closeButton} onClick={() => setShowPlaylistModal(false)}>✕</button>
+              <button
+                className={styles.closeButton}
+                onClick={() => setShowPlaylistModal(false)}
+              >
+                ✕
+              </button>
             </div>
 
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div
+              className={styles.modalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className={styles.playlistGrid}>
                 {playlists.map((playlist, index) => (
                   <div
                     key={playlist.id}
                     className={`${styles.playlistCard}
-                                ${selectedPlaylist === playlist.id ? styles.selected : ""}
-                                ${highlightedIndex === index ? styles.highlighted : ""}`}
+                                ${
+                                  selectedPlaylist === playlist.id
+                                    ? styles.selected
+                                    : ""
+                                }
+                                ${
+                                  highlightedIndex === index
+                                    ? styles.highlighted
+                                    : ""
+                                }`}
                     onClick={() => {
                       setHighlightedIndex(index);
                       selectPlaylist(playlist.id);
