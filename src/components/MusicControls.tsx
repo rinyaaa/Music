@@ -99,36 +99,6 @@ const MusicControls = () => {
     }
   }, [accessToken, fetchPlaylists]);
 
-  // キーボードナビゲーション
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (!showPlaylistModal) return;
-
-      switch (event.key) {
-        case "ArrowLeft":
-          event.preventDefault();
-          navigatePrevious();
-          break;
-        case "ArrowRight":
-          event.preventDefault();
-          navigateNext();
-          break;
-        case "Enter":
-        case " ":
-          event.preventDefault();
-          selectHighlighted();
-          break;
-        case "Escape":
-          event.preventDefault();
-          setShowPlaylistModal(false);
-          break;
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyPress);
-    return () => document.removeEventListener("keydown", handleKeyPress);
-  }, [showPlaylistModal, navigatePrevious, navigateNext, selectHighlighted]);
-
   // 全てSpotify Web APIで統一
   const togglePlayPause = async () => {
     if (!accessToken || !deviceId) return;
