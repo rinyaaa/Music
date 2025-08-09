@@ -3,7 +3,7 @@
   border-radius: 16px;
   padding: 1.5rem;
   color: white;
-  width: 50svw;
+  width: 70svw;
   margin: 0 auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
@@ -18,12 +18,33 @@
   align-items: center;
 }
 
-.albumArt {
-  width: 64px;
-  height: 64px;
+.trackInfoContent {
+  background: linear-gradient(155deg, white 80%, #361f72);
+  width: 70%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  border-radius: 12px;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+}
+
+.albumImage {
+  width: 150px;
+  height: 150px;
   border-radius: 8px;
   overflow: hidden;
-  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+}
+
+.albumArt {
+  border-radius: 8px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,15 +57,17 @@
     color: rgba(110, 68, 219, 0.9);
     margin: 0 0 0.25rem 0;
     text-shadow: white 2 2 10px;
-    font-size: 1.4rem;
+    font-size: 3rem;
     font-weight: 600;
+    text-align: center;
   }
 
   p {
     margin: 0;
     color: rgba(110, 68, 219, 0.5);
     text-shadow: gray 0 0 0.3px;
-    font-size: 1.1rem;
+    font-size: 2rem;
+    text-align: center;
   }
 }
 
@@ -56,6 +79,7 @@
 
 .controls {
   display: flex;
+
   justify-content: center;
   align-items: center;
   gap: 1rem;
@@ -119,6 +143,7 @@
 .volume {
   display: flex;
   align-items: center;
+
   gap: 0.5rem;
   margin-bottom: 1.5rem;
 
@@ -156,8 +181,7 @@
 
 .testControls {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  gap: 9rem;
   margin-bottom: 1rem;
 }
 
@@ -166,6 +190,26 @@
   flex-direction: column;
   gap: 0.5rem;
   align-items: center;
+}
+
+.selectIcon {
+  width: 400px;
+  height: auto;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.nextIcon {
+  width: 300px;
+  height: auto;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 }
 
 .selectedPlaylist {
@@ -308,7 +352,16 @@
     font-size: 0.8rem;
   }
 }
-
+.backButton {
+  width: 300px;
+}
+.backButtonContainer {
+  display: flex;
+  gap: 12rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
 .playlistDropdown {
   width: 100%;
   max-width: 300px;
@@ -417,5 +470,48 @@
   &:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(29, 185, 84, 0.3);
+  }
+}
+
+.instructions {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 1rem;
+}
+
+// 音楽アイコンのオーバーレイ
+.musicIconOverlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  animation: musicIconAppear 0.5s ease-out;
+}
+
+.musicIcon {
+  filter: drop-shadow(0 4px 12px rgba(255, 165, 105, 0.6));
+  animation: musicIconPulse 3s ease-in-out;
+}
+
+@keyframes musicIconAppear {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes musicIconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
   }
 }
