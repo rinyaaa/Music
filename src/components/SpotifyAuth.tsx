@@ -16,7 +16,6 @@ const SpotifyAuth = () => {
   const handleLogin = async () => {
     const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
 
-
     const redirectUri = "http://127.0.0.1:3000/callback";
 
     const codeVerifier = generateRandomString(64);
@@ -48,7 +47,7 @@ const SpotifyAuth = () => {
       show_dialog: "true",
     });
 
-const spotifyUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    const spotifyUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
     window.location.href = spotifyUrl;
   };
 
@@ -58,12 +57,11 @@ const spotifyUrl = `https://accounts.spotify.com/authorize?${params.toString()}`
   // };
 
   return (
-
     <div className={styles.authContainer}>
-
       <button onClick={handleLogin} className={styles.loginButton}>
         Spotify でログイン
       </button>
+    </div>
   );
 };
 
