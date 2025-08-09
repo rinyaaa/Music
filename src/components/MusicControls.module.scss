@@ -3,7 +3,7 @@
   border-radius: 16px;
   padding: 1.5rem;
   color: white;
-  width: 50svw;
+  width: 70svw;
   margin: 0 auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
@@ -18,12 +18,33 @@
   align-items: center;
 }
 
-.albumArt {
-  width: 64px;
-  height: 64px;
+.trackInfoContent {
+  background-color: white;
+  width: 65%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  border-radius: 12px;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+}
+
+.albumImage {
+  width: 150px;
+  height: 150px;
   border-radius: 8px;
   overflow: hidden;
-  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+}
+
+.albumArt {
+  border-radius: 8px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,15 +57,17 @@
     color: rgba(110, 68, 219, 0.9);
     margin: 0 0 0.25rem 0;
     text-shadow: white 2 2 10px;
-    font-size: 1.4rem;
+    font-size: 3.5rem;
     font-weight: 600;
+    text-align: center;
   }
 
   p {
     margin: 0;
     color: rgba(110, 68, 219, 0.5);
     text-shadow: gray 0 0 0.3px;
-    font-size: 1.1rem;
+    font-size: 2rem;
+    text-align: center;
   }
 }
 
@@ -120,6 +143,7 @@
 .volume {
   display: flex;
   align-items: center;
+
   gap: 0.5rem;
   margin-bottom: 1.5rem;
 
@@ -428,6 +452,13 @@
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(29, 185, 84, 0.3);
   }
+}
+
+.instructions {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 1rem;
 }
 
 // 音楽アイコンのオーバーレイ

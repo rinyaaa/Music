@@ -43,8 +43,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlay, setIsPlay] = useState(false);
   const [currentAudio, setCurrentAudio] = useState("/audio/a.mp3");
-  const [showMusicIcon, setShowMusicIcon] = useState(false);
-  const [currentMusicIcon, setCurrentMusicIcon] = useState(musicIcon);
+
   const [multipleIcons, setMultipleIcons] = useState<
     Array<{
       id: number;
@@ -433,7 +432,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
 
     setTimeout(() => {
       setMultipleIcons([]);
-    }, 1500);
+    }, 2500);
   };
 
   // ====== メイン判定 ======
@@ -539,19 +538,6 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
 
   return (
     <div className={styles.controlsContainer}>
-      {/* 音楽アイコンのオーバーレイ */}
-      {showMusicIcon && (
-        <div className={styles.musicIconOverlay}>
-          <Image
-            src={currentMusicIcon}
-            alt="Music Playing"
-            width={120}
-            height={120}
-            className={styles.musicIcon}
-          />
-        </div>
-      )}
-
       {/* 複数のランダムアイコンのオーバーレイ */}
       {multipleIcons.map((iconData) => (
         <div
@@ -598,17 +584,18 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
           <div style={{ opacity: 0.7 }}>BLE: {status}</div>
         )}
       </div>
-
+        
       <div className={styles.trackInfo}>
         {currentTrack ? (
-          <>
+          <div className={styles.trackInfoContent}>
             <div className={styles.albumArt}>
               {currentTrack.album?.images?.[0] && (
                 <Image
                   src={currentTrack.album.images[0].url}
                   alt={currentTrack.album.name}
-                  width={500}
-                  height={500}
+                  width={100}
+                  height={100}
+                  className={styles.albumImage}
                 />
               )}
             </div>
@@ -620,7 +607,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
                   .join(", ")}
               </p>
             </div>
-          </>
+          </div>
         ) : (
           <div className={styles.noTrack}>
             <p>再生中の曲がありません</p>
@@ -680,31 +667,36 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
         </>
       ) : (
         <>
+          <p className={styles.instructions}>リズムに乗って音楽を奏でよう</p>
           <div className={styles.controls}>
-            <button
-              className={styles.testButton}
+            <Image
+              src={IconLeft}
+              alt="Play"
+              width={90}
+              height={90}
               onClick={handleButtonClick("/audio/a.mp3")}
-            >
-              音声A
-            </button>
-            <button
-              className={styles.testButton}
-              onClick={handleButtonClick("/audio/e.mp3")}
-            >
-              音声E
-            </button>
-            <button
-              className={styles.testButton}
+            />
+            <Image
+              src={IconDown}
+              alt="Play"
+              width={90}
+              height={90}
               onClick={handleButtonClick("/audio/i.mp3")}
-            >
-              音声I
-            </button>
-            <button
-              className={styles.testButton}
+            />
+            <Image
+              src={IconUp}
+              alt="Play"
+              width={90}
+              height={90}
               onClick={handleButtonClick("/audio/u.mp3")}
-            >
-              音声U
-            </button>
+            />
+            <Image
+              src={IconRight}
+              alt="Play"
+              width={90}
+              height={90}
+              onClick={handleButtonClick("/audio/e.mp3")}
+            />
 
             {/* MP3再生用のaudio要素 */}
             <audio
