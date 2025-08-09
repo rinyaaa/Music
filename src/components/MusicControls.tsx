@@ -16,6 +16,8 @@ import music3Icon from "@/assets/music3.svg"; // 音楽アイコン3
 import backIcon from "@/assets/back.svg"; // 戻るボタンのアイコン
 import rightHuman from "@/assets/rightHuman.svg"; // 戻るボタンのアイコン
 import leftHuman from "@/assets/leftHuman.svg"; // 戻るボタンのアイコン
+import nextIcon from "@/assets/nextButton.svg"; // 次へボタンのアイコン
+import selectIcon from "@/assets/selectButton.svg"; // アイコンライブラリ
 import type { AccelSample } from "@/lib/xiaoBle";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -584,7 +586,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
           <div style={{ opacity: 0.7 }}>BLE: {status}</div>
         )}
       </div>
-        
+
       <div className={styles.trackInfo}>
         {currentTrack ? (
           <div className={styles.trackInfoContent}>
@@ -649,20 +651,38 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
           </div>
 
           <div className={styles.testControls}>
+            <Image
+              src={rightHuman}
+              alt="Select Playlist"
+              width={120}
+              height={120}
+              className={styles.backButton}
+            />
             <div className={styles.playlistSelector}>
-              <button
+              <Image
+                src={selectIcon}
+                alt="Select Playlist"
+                width={200}
+                height={100}
                 onClick={() => setShowPlaylistModal(true)}
-                className={styles.testButton}
-              >
-                うでを下に振ってプレイリスト選択に戻る
-              </button>
-              <button
+                className={styles.selectIcon}
+              />
+              <Image
+                src={nextIcon}
+                alt="Select Playlist"
+                width={100}
+                height={100}
+                className={styles.nextIcon}
                 onClick={() => router.push("/music")}
-                className={styles.testButton}
-              >
-                次の画面へ
-              </button>
+              />
             </div>
+            <Image
+              src={leftHuman}
+              alt="Select Playlist"
+              width={120}
+              height={120}
+              className={styles.backButton}
+            />
           </div>
         </>
       ) : (
@@ -713,8 +733,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
             <Image
               src={rightHuman}
               alt="Select Playlist"
-              width={100}
-              height={100}
+              width={120}
+              height={120}
               className={styles.backButton}
             />
             <Image
@@ -728,8 +748,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
             <Image
               src={leftHuman}
               alt="Select Playlist"
-              width={100}
-              height={100}
+              width={120}
+              height={120}
               className={styles.backButton}
             />
           </div>
