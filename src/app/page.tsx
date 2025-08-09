@@ -4,10 +4,21 @@ import SpotifyAuth from "../components/SpotifyAuth";
  import SpotifyPlayer from "../components/SpotifyPlayer";
  import MusicControls from "../components/MusicControls";
 import { useSpotifyStore } from "../store/spotify";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import styles from "./page.module.scss";
 
 export default function Home() {
   const { accessToken } = useSpotifyStore();
+  const router = useRouter();
+  const hasRedirected = useRef(false);
+
+  useEffect(() => {
+    if (accessToken && !hasRedirected.current) {
+      hasRedirected.current = true;
+      router.push("/controls");
+    }
+  }, [accessToken, router]);
 
 
   return (
@@ -46,6 +57,7 @@ export default function Home() {
           </main>
         </div>
       )}
+
     </div>
   );
 }

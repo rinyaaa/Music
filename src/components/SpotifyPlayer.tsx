@@ -55,6 +55,31 @@ const SpotifyPlayer = () => {
   const activateDevice = async (deviceId: string, accessToken: string) => {
     try {
       console.log("Activating device:", deviceId);
+
+      // まずユーザー情報を確認
+      const userResponse = await fetch("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        console.log("User info:", userData);
+        console.log("Product type:", userData.product);
+
+        if (userData.product !== "premium") {
+          console.error(
+            "User does not have premium account:",
+            userData.product
+          );
+          alert(
+            `アカウントタイプ: ${userData.product}. Spotify Web Playback SDKを使用するにはプレミアムアカウントが必要です。`
+          );
+          return;
+        }
+      }
+
       const response = await fetch("https://api.spotify.com/v1/me/player", {
         method: "PUT",
         headers: {
@@ -70,6 +95,13 @@ const SpotifyPlayer = () => {
       if (!response.ok && response.status !== 204) {
         const errorText = await response.text();
         console.error("Failed to activate device:", response.status, errorText);
+
+        // 403エラーの場合はプレミアムアカウントの問題の可能性
+        if (response.status === 403) {
+          alert(
+            "デバイスの登録に失敗しました。Spotifyプレミアムアカウントが必要です。"
+          );
+        }
       } else {
         console.log("Device activated successfully");
       }
@@ -108,13 +140,40 @@ const SpotifyPlayer = () => {
       spotifyPlayer.addListener("authentication_error", (data) => {
         const errorData = data as { message: string };
         console.error("Failed to authenticate:", errorData.message);
-        alert("認証エラー：Spotifyプレミアムアカウントが必要です");
+        console.error(
+          "Access token first 20 chars:",
+          accessToken?.substring(0, 20)
+        );
+
+        // トークンの有効性を確認
+        fetch("https://api.spotify.com/v1/me", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+          .then((response) => {
+            if (!response.ok) {
+              console.error("Token validation failed:", response.status);
+              if (response.status === 401) {
+                alert("認証トークンが無効です。再ログインしてください。");
+                localStorage.removeItem("spotify_access_token");
+                window.location.href = "/";
+              }
+            }
+          })
+          .catch((err) => console.error("Token validation error:", err));
+
+        alert(
+          `認証エラー: ${errorData.message}. プレミアムアカウントが必要です。`
+        );
       });
 
       spotifyPlayer.addListener("account_error", (data) => {
         const errorData = data as { message: string };
         console.error("Failed to validate Spotify account:", errorData.message);
-        alert("アカウントエラー：Spotifyプレミアムアカウントが必要です");
+        alert(
+          `アカウントエラー: ${errorData.message}. Spotifyプレミアムアカウントでログインしてください。`
+        );
       });
 
       spotifyPlayer.addListener("playback_error", (data) => {
@@ -140,7 +199,10 @@ const SpotifyPlayer = () => {
         setIsSDKReady(true);
 
         if (accessToken) {
-          activateDevice(readyData.device_id, accessToken);
+          // 少し遅延してからデバイスを登録
+          setTimeout(() => {
+            activateDevice(readyData.device_id, accessToken);
+          }, 1000);
         }
       });
 
