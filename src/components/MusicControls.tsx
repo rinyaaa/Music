@@ -1,9 +1,14 @@
 "use client";
 
+import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
 import { useSpotifyStore } from "../store/spotify";
 import styles from "./MusicControls.module.scss";
-import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
+
+import IconDown from "@/assets/down.svg";
+import IconLeft from "@/assets/left.svg";
+import IconRight from "@/assets/right.svg";
+import IconUp from "@/assets/up.svg";
 
 interface Playlist {
   id: string;
@@ -207,14 +212,32 @@ const MusicControls = () => {
       </div>
 
       <div className={styles.controls}>
-        <button onClick={skipToPrevious} className={styles.controlButton}>
-          ⏮️
+        <button onClick={skipToPrevious} className={styles.navButton}>
+          <Image src={IconLeft} alt="Previous" width={60} height={60} />
+          <br />
+          Back
         </button>
-        <button onClick={togglePlayPause} className={styles.playButton}>
-          {isPlaying ? "⏸️" : "▶️"}
+        <button onClick={togglePlayPause} className={styles.selectButton}>
+          <span>
+            {isPlaying ? (
+              <>
+                <Image src={IconDown} alt="Pause" width={80} height={80} />
+                <br />
+                Pause
+              </>
+            ) : (
+              <>
+                <Image src={IconUp} alt="Play" width={80} height={80} />
+                <br />
+                Play
+              </>
+            )}
+          </span>
         </button>
-        <button onClick={skipToNext} className={styles.controlButton}>
-          ⏭️
+        <button onClick={skipToNext} className={styles.navButton}>
+          <Image src={IconRight} alt="Next" width={60} height={60} />
+          <br />
+          Next
         </button>
       </div>
 
@@ -224,7 +247,7 @@ const MusicControls = () => {
             onClick={() => setShowPlaylistModal(true)}
             className={styles.testButton}
           >
-            📁 プレイリストを選択
+            うでを下に振ってプレイリスト選択に戻る
           </button>
         </div>
       </div>
@@ -285,16 +308,22 @@ const MusicControls = () => {
               </div>
               <div className={styles.navigationControls}>
                 <button onClick={navigatePrevious} className={styles.navButton}>
-                  前へ
+                  <Image src={IconLeft} alt="Previous" width={60} height={60} />
+                  <br />
+                  左へ
                 </button>
                 <button
                   onClick={selectHighlighted}
                   className={styles.selectButton}
                 >
+                  <Image src={IconUp} alt="Play" width={80} height={80} />
+                  <br />
                   決定
                 </button>
                 <button onClick={navigateNext} className={styles.navButton}>
-                  次へ
+                  <Image src={IconRight} alt="Next" width={60} height={60} />
+                  <br />
+                  右へ
                 </button>
               </div>
             </div>

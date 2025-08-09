@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import styles from "../page.module.scss";
 import Image from "next/image"; // 画像を表示するためのインポート
-import icon from "@/assets/logo.png"; // ロゴ画像のパスを指定
+import icon from "@/assets/logo.svg"; // ロゴ画像のパスを指定
 
 export default function ControlsPage() {
   const { accessToken } = useSpotifyStore();
@@ -36,8 +36,8 @@ export default function ControlsPage() {
           src={icon}
           alt="Gesture Audio　ロゴ"
           className={styles.logo}
-          width={250}
-          height={250}
+          width={400}
+          height={400}
         />
         <p>ジェスチャーで音楽を操作しよう！</p>
       </header>
