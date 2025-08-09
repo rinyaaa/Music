@@ -91,8 +91,6 @@ export default function ControlsPage() {
         <MusicControls
           sample={sample}
           status={status}
-          onConnect={handleConnect}      // 任意：MusicControls側に接続ボタンを置くなら
-          onDisconnect={handleDisconnect} // 任意
         />
       </main>
     </div>
