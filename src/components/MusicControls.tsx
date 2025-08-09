@@ -3,10 +3,118 @@
 import { useSpotifyStore } from "../store/spotify";
 import styles from "./MusicControls.module.scss";
 import Image from "next/image";
+import { useState, useEffect, useCallback } from "react";
+
+interface Playlist {
+  id: string;
+  name: string;
+  tracks: {
+    total: number;
+  };
+  images: Array<{
+    url: string;
+  }>;
+}
 
 const MusicControls = () => {
-  const { accessToken, deviceId, isPlaying, currentTrack, player } =
-    useSpotifyStore();
+  const { accessToken, deviceId, isPlaying, currentTrack } = useSpotifyStore();
+
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<string>("");
+  const [showPlaylistSelector, setShowPlaylistSelector] = useState(false);
+
+  // プレイリスト一覧を取得
+  const fetchPlaylists = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me/playlists", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPlaylists(data.items);
+      }
+    } catch (error) {
+      console.error("プレイリスト取得エラー:", error);
+    }
+  }, [accessToken]);
+
+  // コンポーネントマウント時にプレイリストを取得
+  useEffect(() => {
+    if (accessToken) {
+      fetchPlaylists();
+    }
+  }, [accessToken, fetchPlaylists]);
+
+  // 選択されたプレイリストまたはデフォルト曲を再生
+  const playSelectedMusic = async () => {
+    if (!accessToken || !deviceId) {
+      alert("Spotifyに接続してデバイスを設定してください");
+      return;
+    }
+
+    if (selectedPlaylist) {
+      // プレイリストを再生
+      try {
+        const response = await fetch(
+          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              context_uri: `spotify:playlist:${selectedPlaylist}`,
+            }),
+          }
+        );
+
+        if (response.ok || response.status === 204) {
+          alert("🎵 プレイリスト再生開始！");
+        } else {
+          const errorText = await response.text();
+          console.error("再生エラー:", response.status, errorText);
+          alert(`再生に失敗しました: ${response.status}`);
+        }
+      } catch (error) {
+        console.error("再生エラー:", error);
+        alert("再生エラーが発生しました");
+      }
+    } else {
+      // デフォルトのテスト曲を再生
+      try {
+        const response = await fetch(
+          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              uris: ["spotify:track:7qiZfU4dY1lWllzX7mPBI3"],
+            }),
+          }
+        );
+
+        if (response.ok || response.status === 204) {
+          alert("🎵 テスト曲再生開始！");
+        } else {
+          const errorText = await response.text();
+          console.error("再生エラー:", response.status, errorText);
+          alert(`再生に失敗しました: ${response.status}`);
+        }
+      } catch (error) {
+        console.error("再生エラー:", error);
+        alert("再生エラーが発生しました");
+      }
+    }
+  };
 
   // 全てSpotify Web APIで統一
   const togglePlayPause = async () => {
@@ -100,88 +208,6 @@ const MusicControls = () => {
     }
   };
 
-  // 強制停止機能を追加
-  const forceStop = async () => {
-    if (!accessToken || !deviceId) return;
-
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (response.ok || response.status === 204) {
-        alert("🛑 音楽を強制停止しました");
-      }
-    } catch (error) {
-      console.error("停止エラー:", error);
-    }
-  };
-
-  // デバイス再アクティブ化機能
-  const reactivateDevice = async () => {
-    if (!accessToken || !deviceId) return;
-
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/player", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          device_ids: [deviceId],
-          play: false,
-        }),
-      });
-
-      if (response.ok || response.status === 204) {
-        alert("🔄 デバイスを再アクティブ化しました");
-      }
-    } catch (error) {
-      console.error("再アクティブ化エラー:", error);
-    }
-  };
-
-  const playTestPlaylist = async () => {
-    if (!accessToken || !deviceId) {
-      alert("Spotifyに接続してデバイスを設定してください");
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            uris: ["spotify:track:7qiZfU4dY1lWllzX7mPBI3"],
-          }),
-        }
-      );
-
-      if (response.ok || response.status === 204) {
-        alert("🎵 再生開始！");
-      } else {
-        const errorText = await response.text();
-        console.error("再生エラー:", response.status, errorText);
-        alert(`再生に失敗しました: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("再生エラー:", error);
-      alert("再生エラーが発生しました");
-    }
-  };
-
   if (!accessToken || !deviceId) {
     return (
       <div className={styles.controlsContainer}>
@@ -192,7 +218,6 @@ const MusicControls = () => {
 
   return (
     <div className={styles.controlsContainer}>
-      {/* 既存のUI部分はそのまま */}
       <div className={styles.trackInfo}>
         {currentTrack ? (
           <>
@@ -247,37 +272,35 @@ const MusicControls = () => {
       </div>
 
       <div className={styles.testControls}>
-        <button onClick={playTestPlaylist} className={styles.testButton}>
-          🎵 テスト再生 (Ed Sheeran)
-        </button>
-        <button onClick={forceStop} className={styles.testButton}>
-          🛑 強制停止
-        </button>
-        <button onClick={reactivateDevice} className={styles.testButton}>
-          🔄 デバイス再アクティブ化
-        </button>
-        <button
-          onClick={() => {
-            if (player) {
-              player.getCurrentState().then((state) => {
-                console.log("Current player state:", state);
-                alert(
-                  `プレイヤー状態: ${state ? "アクティブ" : "非アクティブ"}`
-                );
-              });
-            }
-          }}
-          className={styles.testButton}
-        >
-          🔍 プレイヤー状態確認
-        </button>
-      </div>
+        <div className={styles.playlistSelector}>
+          <button
+            onClick={() => setShowPlaylistSelector(!showPlaylistSelector)}
+            className={styles.testButton}
+          >
+            📁 プレイリストを選択
+          </button>
 
-      <div className={styles.status}>
-        <p>デバイス: ブラウザ ({deviceId?.substring(0, 8)}...)</p>
-        <p>ステータス: {isPlaying ? "再生中" : "停止中"}</p>
-        <p>トークン: {accessToken ? "有効" : "無効"}</p>
-        <p>プレイヤー: {player ? "接続済み" : "未接続"}</p>
+          {showPlaylistSelector && (
+            <div className={styles.playlistDropdown}>
+              <select
+                value={selectedPlaylist}
+                onChange={(e) => setSelectedPlaylist(e.target.value)}
+                className={styles.playlistSelect}
+              >
+                <option value="">デフォルト曲を選択</option>
+                {playlists.map((playlist) => (
+                  <option key={playlist.id} value={playlist.id}>
+                    {playlist.name} ({playlist.tracks.total}曲)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <button onClick={playSelectedMusic} className={styles.testButton}>
+          🎵 {selectedPlaylist ? "プレイリスト再生" : "テスト再生 (Ed Sheeran)"}
+        </button>
       </div>
     </div>
   );
