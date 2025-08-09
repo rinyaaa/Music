@@ -7,7 +7,6 @@
   color: white;
   text-align: center;
   margin: 1rem 0;
-  
 
   h2 {
     margin-bottom: 1rem;
@@ -26,13 +25,14 @@
   background: white;
   color: orange;
   border: none;
+  box-shadow: #d0bffc 3 3 8px;
   padding: 12px 24px;
   border-radius: 25px;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-   font-family: inherit;
+  font-family: inherit;
 
   &:hover {
     background: #fff;

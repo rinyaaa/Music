@@ -1,11 +1,8 @@
-
-
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
 }
-
 
 * {
   box-sizing: border-box;
@@ -14,6 +11,5 @@ body {
 }
 
 body {
-   background: linear-gradient(140deg, #D0BFFC, #361F72);
+  background: linear-gradient(140deg, #705aa9, #130b29);
 }
-
