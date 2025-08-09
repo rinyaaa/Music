@@ -84,7 +84,7 @@ export default function CallbackPage() {
 
       const codeVerifier = localStorage.getItem("code_verifier");
       if (!codeVerifier) {
-        console.error("Code verifier not found");
+        // console.error("Code verifier not found");
         router.push("/");
         return;
       }

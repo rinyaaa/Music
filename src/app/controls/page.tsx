@@ -6,6 +6,8 @@ import { useSpotifyStore } from "../../store/spotify";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import styles from "../page.module.scss";
+import Image from "next/image"; // 画像を表示するためのインポート
+import icon from "@/assets/logo.png"; // ロゴ画像のパスを指定
 
 export default function ControlsPage() {
   const { accessToken } = useSpotifyStore();
@@ -30,7 +32,13 @@ export default function ControlsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1>🎵 Music Controls</h1>
+        <Image
+          src={icon}
+          alt="Gesture Audio　ロゴ"
+          className={styles.logo}
+          width={150}
+          height={150}
+        />
         <p>ジェスチャーで音楽を操作しよう！</p>
       </header>
 

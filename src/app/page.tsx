@@ -1,12 +1,12 @@
 "use client";
 
 import SpotifyAuth from "../components/SpotifyAuth";
- import SpotifyPlayer from "../components/SpotifyPlayer";
- import MusicControls from "../components/MusicControls";
 import { useSpotifyStore } from "../store/spotify";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import styles from "./page.module.scss";
+import Image from "next/image"; // 画像を表示するためのインポート
+import icon from "@/assets/logo.png"; // ロゴ画像のパスを指定
 
 export default function Home() {
   const { accessToken } = useSpotifyStore();
@@ -20,44 +20,26 @@ export default function Home() {
     }
   }, [accessToken, router]);
 
-
   return (
     <div className={styles.page}>
-      {accessToken ? (
-        //【A】accessTokenが存在する場合：プレイヤー画面
-        <div className={styles.container}>
-          <header className={styles.header}>
-            <img src="/logo.png"
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <Image
+            src={icon}
             alt="Gesture Audio　ロゴ"
             className={styles.logo}
-            />
-            <p>ジェスチャーで音楽を操作しよう！</p>
-          </header>
+            width={150}
+            height={150}
+          />
+          <p>ジェスチャーで音楽を操作しよう！</p>
+        </header>
 
-          <main>
-            <SpotifyPlayer />
-            <MusicControls />
-          </main>
-        </div>
-      ) : (
-        //【B】accessTokenが存在しない場合：ログイン画面
-        <div className={styles.container}>
-          <header className={styles.header}>
-            <img src="/logo.png"
-            alt="Gesture Audio　ロゴ"
-            className={styles.logo}
-            />
-            <p>ジェスチャーで音楽を操作しよう！</p>
-          </header>
-
-          <main className={styles.loginBox}>
-            <p>音楽をジェスチャーで操作するために</p>
-            <p>Spotifyにログインしてください</p>
-            <SpotifyAuth />
-          </main>
-        </div>
-      )}
-
+        <main className={styles.loginBox}>
+          <p>音楽をジェスチャーで操作するために</p>
+          <p>Spotifyにログインしてください</p>
+          <SpotifyAuth />
+        </main>
+      </div>
     </div>
   );
 }
