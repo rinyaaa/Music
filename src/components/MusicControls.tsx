@@ -56,7 +56,7 @@ const MusicControls = () => {
       // プレイリスト選択後、自動で再生を開始
       if (playlistId && accessToken && deviceId) {
         try {
-          await fetch(
+          const response = await fetch(
             `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
             {
               method: "PUT",
@@ -69,9 +69,32 @@ const MusicControls = () => {
               }),
             }
           );
+
+          if (response.status === 401) {
+            alert("認証が切れました。再ログインしてください。");
+            return;
+          }
+
+          if (response.status === 403) {
+            alert("この機能を使用するにはSpotifyプレミアムプランが必要です。");
+            return;
+          }
+
+          if (response.status === 404) {
+            alert(
+              "アクティブなデバイスが見つかりません。Spotifyアプリを開いて音楽を再生してください。"
+            );
+            return;
+          }
+
+          if (!response.ok && response.status !== 204) {
+            const errorText = await response.text();
+            console.error("再生エラー:", response.status, errorText);
+            alert(`再生エラーが発生しました (${response.status})`);
+          }
         } catch (error) {
           console.error("再生エラー:", error);
-          alert("再生エラーが発生しました");
+          alert("ネットワークエラーが発生しました");
         }
       }
     },
@@ -101,7 +124,7 @@ const MusicControls = () => {
     }
   }, [accessToken, fetchPlaylists]);
 
-  // 全てSpotify Web APIで統一
+  // 全てSpotify Web APIで統一（エラーハンドリング強化）
   const togglePlayPause = async () => {
     if (!accessToken || !deviceId) return;
 
@@ -117,11 +140,37 @@ const MusicControls = () => {
         }
       );
 
+      if (response.status === 401) {
+        console.error("認証エラー: アクセストークンが無効です");
+        alert("認証が切れました。再ログインしてください。");
+        localStorage.removeItem("spotify_access_token");
+        window.location.reload();
+        return;
+      }
+
+      if (response.status === 403) {
+        console.error("権限エラー: プレミアムプランが必要です");
+        alert("この機能を使用するにはSpotifyプレミアムプランが必要です。");
+        return;
+      }
+
+      if (response.status === 404) {
+        console.error("デバイスが見つかりません");
+        alert(
+          "アクティブなデバイスが見つかりません。Spotifyアプリを開いて音楽を再生してください。"
+        );
+        return;
+      }
+
       if (response.ok || response.status === 204) {
         console.log(`音楽を${isPlaying ? "停止" : "再生"}しました`);
+      } else {
+        console.error("API エラー:", response.status, await response.text());
+        alert(`エラーが発生しました (${response.status})`);
       }
     } catch (error) {
       console.error("Toggle play/pause failed:", error);
+      alert("ネットワークエラーが発生しました");
     }
   };
 
@@ -139,11 +188,27 @@ const MusicControls = () => {
         }
       );
 
+      if (response.status === 401) {
+        console.error("認証エラー");
+        alert("認証が切れました。再ログインしてください。");
+        return;
+      }
+
+      if (response.status === 403) {
+        console.error("権限エラー");
+        alert("この機能を使用するにはSpotifyプレミアムプランが必要です。");
+        return;
+      }
+
       if (response.ok || response.status === 204) {
         console.log("次の曲に移動しました");
+      } else {
+        console.error("Skip next エラー:", response.status);
+        alert(`エラーが発生しました (${response.status})`);
       }
     } catch (error) {
       console.error("Skip to next failed:", error);
+      alert("ネットワークエラーが発生しました");
     }
   };
 
@@ -161,11 +226,27 @@ const MusicControls = () => {
         }
       );
 
+      if (response.status === 401) {
+        console.error("認証エラー");
+        alert("認証が切れました。再ログインしてください。");
+        return;
+      }
+
+      if (response.status === 403) {
+        console.error("権限エラー");
+        alert("この機能を使用するにはSpotifyプレミアムプランが必要です。");
+        return;
+      }
+
       if (response.ok || response.status === 204) {
         console.log("前の曲に移動しました");
+      } else {
+        console.error("Skip previous エラー:", response.status);
+        alert(`エラーが発生しました (${response.status})`);
       }
     } catch (error) {
       console.error("Skip to previous failed:", error);
+      alert("ネットワークエラーが発生しました");
     }
   };
 
