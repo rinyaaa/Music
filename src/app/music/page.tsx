@@ -4,10 +4,8 @@ import MusicControls from "../../components/MusicControls";
 import icon from "@/assets/logo.png"; // ロゴ画像のパスを指定
 import Image from "next/image";
 import styles from "./index.module.scss"; // スタイルをインポート
-import { useRef, useState } from "react";
 
 export default function MusicPage() {
- 
   const sample = null; // ここは実際のサンプルデータに置き換えてください
   const status = "接続中"; // ここは実際のステータス
 
