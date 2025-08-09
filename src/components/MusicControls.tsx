@@ -21,7 +21,7 @@ const MusicControls = () => {
 
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string>("");
-  const [showPlaylistSelector, setShowPlaylistSelector] = useState(false);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
   // プレイリスト一覧を取得
   const fetchPlaylists = useCallback(async () => {
@@ -50,17 +50,15 @@ const MusicControls = () => {
     }
   }, [accessToken, fetchPlaylists]);
 
-  // 選択されたプレイリストまたはデフォルト曲を再生
-  const playSelectedMusic = async () => {
-    if (!accessToken || !deviceId) {
-      alert("Spotifyに接続してデバイスを設定してください");
-      return;
-    }
+  // プレイリストを選択してモーダルを閉じる
+  const selectPlaylist = async (playlistId: string) => {
+    setSelectedPlaylist(playlistId);
+    setShowPlaylistModal(false);
 
-    if (selectedPlaylist) {
-      // プレイリストを再生
+    // プレイリスト選択後、自動で再生を開始
+    if (playlistId && accessToken && deviceId) {
       try {
-        const response = await fetch(
+        await fetch(
           `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
           {
             method: "PUT",
@@ -69,46 +67,10 @@ const MusicControls = () => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              context_uri: `spotify:playlist:${selectedPlaylist}`,
+              context_uri: `spotify:playlist:${playlistId}`,
             }),
           }
         );
-
-        if (response.ok || response.status === 204) {
-          alert("🎵 プレイリスト再生開始！");
-        } else {
-          const errorText = await response.text();
-          console.error("再生エラー:", response.status, errorText);
-          alert(`再生に失敗しました: ${response.status}`);
-        }
-      } catch (error) {
-        console.error("再生エラー:", error);
-        alert("再生エラーが発生しました");
-      }
-    } else {
-      // デフォルトのテスト曲を再生
-      try {
-        const response = await fetch(
-          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              uris: ["spotify:track:7qiZfU4dY1lWllzX7mPBI3"],
-            }),
-          }
-        );
-
-        if (response.ok || response.status === 204) {
-          alert("🎵 テスト曲再生開始！");
-        } else {
-          const errorText = await response.text();
-          console.error("再生エラー:", response.status, errorText);
-          alert(`再生に失敗しました: ${response.status}`);
-        }
       } catch (error) {
         console.error("再生エラー:", error);
         alert("再生エラーが発生しました");
@@ -184,30 +146,6 @@ const MusicControls = () => {
     }
   };
 
-  const setVolume = async (volume: number) => {
-    if (!accessToken || !deviceId) return;
-
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/me/player/volume?volume_percent=${Math.round(
-          volume * 100
-        )}&device_id=${deviceId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (response.ok || response.status === 204) {
-        console.log(`音量を${Math.round(volume * 100)}%に設定しました`);
-      }
-    } catch (error) {
-      console.error("Set volume failed:", error);
-    }
-  };
-
   if (!accessToken || !deviceId) {
     return (
       <div className={styles.controlsContainer}>
@@ -259,49 +197,72 @@ const MusicControls = () => {
         </button>
       </div>
 
-      <div className={styles.volume}>
-        <span>🔊</span>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          onChange={(e) => setVolume(parseFloat(e.target.value))}
-          className={styles.volumeSlider}
-        />
-      </div>
-
       <div className={styles.testControls}>
         <div className={styles.playlistSelector}>
           <button
-            onClick={() => setShowPlaylistSelector(!showPlaylistSelector)}
+            onClick={() => setShowPlaylistModal(true)}
             className={styles.testButton}
           >
             📁 プレイリストを選択
           </button>
-
-          {showPlaylistSelector && (
-            <div className={styles.playlistDropdown}>
-              <select
-                value={selectedPlaylist}
-                onChange={(e) => setSelectedPlaylist(e.target.value)}
-                className={styles.playlistSelect}
-              >
-                <option value="">デフォルト曲を選択</option>
-                {playlists.map((playlist) => (
-                  <option key={playlist.id} value={playlist.id}>
-                    {playlist.name} ({playlist.tracks.total}曲)
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
-
-        <button onClick={playSelectedMusic} className={styles.testButton}>
-          🎵 {selectedPlaylist ? "プレイリスト再生" : "テスト再生 (Ed Sheeran)"}
-        </button>
       </div>
+
+      {/* プレイリスト選択モーダル */}
+      {showPlaylistModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowPlaylistModal(false)}
+        >
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>プレイリストを選択</h3>
+              <button
+                className={styles.closeButton}
+                onClick={() => setShowPlaylistModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              className={styles.modalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.playlistGrid}>
+                {/* ユーザーのプレイリスト */}
+                {playlists.map((playlist) => (
+                  <div
+                    key={playlist.id}
+                    className={`${styles.playlistCard} ${
+                      selectedPlaylist === playlist.id ? styles.selected : ""
+                    }`}
+                    onClick={() => selectPlaylist(playlist.id)}
+                  >
+                    <div className={styles.playlistIcon}>
+                      {playlist.images?.[0] ? (
+                        <Image
+                          src={playlist.images[0].url}
+                          alt={playlist.name}
+                          width={60}
+                          height={60}
+                          className={styles.playlistImage}
+                        />
+                      ) : (
+                        <span className={styles.defaultIcon}>🎶</span>
+                      )}
+                    </div>
+                    <div className={styles.playlistInfo}>
+                      <h4>{playlist.name}</h4>
+                      <p>{playlist.tracks.total}曲</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
