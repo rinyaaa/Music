@@ -4,6 +4,7 @@ import { useSpotifyStore } from "../store/spotify";
 import styles from "./MusicControls.module.scss";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 interface Playlist {
   id: string;
@@ -18,6 +19,7 @@ interface Playlist {
 
 const MusicControls = () => {
   const { accessToken, deviceId, isPlaying, currentTrack } = useSpotifyStore();
+  const router = useRouter();
 
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string>("");
@@ -225,6 +227,12 @@ const MusicControls = () => {
             className={styles.testButton}
           >
             📁 プレイリストを選択
+          </button>
+          <button
+            onClick={() => router.push("/music")}
+            className={styles.testButton}
+          >
+            次の画面へ
           </button>
         </div>
       </div>
