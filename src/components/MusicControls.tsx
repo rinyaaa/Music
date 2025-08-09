@@ -164,137 +164,212 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     }
   };
 
-  /* ========== ここから「元JS同等」の判定ロジック ========== */
+/* ========== ここから「元JS同等」の判定ロジック ========== */
 
-  // 固定パラメータ（script.jsのスクショ準拠）
-  const TH_HI = 0.45;   // 発火しきい値 (g)
-  const TH_LO = 0.25;   // 解除しきい値 (g)
-  const HPF_FC = 2.3;   // HPFカットオフ (Hz)
-  const LPF_FC = 0.5;   // LPFカットオフ (Hz) …重力推定
-  const UD_SCALE = 2.2; // 上下強調
-  const UD_DOM = 1.8;   // 縦優位条件: |hx*UD_SCALE| >= UD_DOM * |hy|
-  const UD_REFRACT_MS = 600; // 上下後ブロック時間
-  const LR_REFRACT_MS = 600; // 左右後ブロック（相互ブロック対称に）
+// ====== 固定パラメータ（script.js と同値） ======
+const CFG = {
+  TH_HI: 0.45,          // g
+  TH_LO: 0.25,          // g
+  HPF_FC: 2.3,          // Hz
+  LPF_FC: 0.5,          // Hz
+  UD_SCALE: 2.2,        // 上下の閾値強化
+  UD_DOM: 1.8,          // 縦優位: |fvert| >= UD_DOM * |fx|
+  UD_REFRACT_MS: 600,   // UD検出後のリフラクト
+  AXIS_COOLDOWN_MS: 500,
+  MUTUAL_BLOCK_MS: 350,
+  UD_TO_LR_BLOCK_MS: 300,
+  POST_UD_FREEZE_MS: 350,
+};
 
-  // サンプリング周期（XIAO 50Hz想定）
-  const SAMPLE_DT = 0.02;
+const SAMPLE_DT = 0.02; // 50Hz想定（元JSと同じ）
 
-  // HPF: y[n] = α ( y[n-1] + x[n] - x[n-1] ), α = RC/(RC+dt)
-  function makeHPF(fc: number) {
-    const RC = 1 / (2 * Math.PI * fc);
-    const alpha = RC / (RC + SAMPLE_DT);
-    let yPrev = 0;
-    let xPrev = 0;
-    return (x: number) => {
-      const y = alpha * (yPrev + x - xPrev);
-      yPrev = y;
-      xPrev = x;
-      return y;
-    };
+// ====== フィルタ（script.js と同式） ======
+function makeHPF(fc: number) {
+  const RC = 1 / (2 * Math.PI * fc);
+  const alpha = RC / (RC + SAMPLE_DT);
+  let yPrev = 0, xPrev = 0;
+  return (x: number) => {
+    const y = alpha * (yPrev + x - xPrev);
+    yPrev = y; xPrev = x;
+    return y;
+  };
+}
+function makeLPF(fc: number) {
+  const RC = 1 / (2 * Math.PI * fc);
+  const alpha = SAMPLE_DT / (RC + SAMPLE_DT);
+  let y = 0;
+  return (x: number) => { y = y + alpha * (x - y); return y; };
+}
+
+// HPF/LPF（X,Y,Z）＋ 縦成分用HPF
+const hpfXproc = useRef(makeHPF(CFG.HPF_FC));
+const hpfYproc = useRef(makeHPF(CFG.HPF_FC));
+const hpfZproc = useRef(makeHPF(CFG.HPF_FC));
+const lpfXproc = useRef(makeLPF(CFG.LPF_FC));
+const lpfYproc = useRef(makeLPF(CFG.LPF_FC));
+const lpfZproc = useRef(makeLPF(CFG.LPF_FC));
+const hpfVert  = useRef(makeHPF(CFG.HPF_FC));
+
+// ====== 汎用検出器（script.js の makeDetector と同等） ======
+function makeDetector(onPos: () => void, onNeg: () => void, opts?: {
+  TH_HI?: number; TH_LO?: number; REFRACT_MS?: number;
+}) {
+  const TH_HI = opts?.TH_HI ?? CFG.TH_HI;
+  const TH_LO = opts?.TH_LO ?? CFG.TH_LO;
+  const REFRACT_MS = opts?.REFRACT_MS ?? 350;
+  const MIN_MS = 100, MAX_MS = 900;
+
+  let state: "idle" | "tracking" = "idle";
+  let startTs = 0, firstSign = 0, crossedZero = false;
+  let lastDir: "POS" | "NEG" | null = null;
+  let lastDirTs = 0;
+
+  return (x: number) => {
+    const now = performance.now();
+    const ax = Math.abs(x);
+    const sg = Math.sign(x) as -1 | 0 | 1;
+
+    switch (state) {
+      case "idle":
+        if (ax > TH_HI && (now - lastDirTs) > REFRACT_MS) {
+          state = "tracking";
+          startTs = now;
+          firstSign = (sg !== 0) ? sg : (x >= 0 ? 1 : -1);
+          crossedZero = false;
+        }
+        break;
+
+      case "tracking":
+        if ((sg !== 0) && (sg !== firstSign)) crossedZero = true;
+
+        if (ax < TH_LO && (now - startTs) > MIN_MS) {
+          const dur = now - startTs;
+          if (dur < MAX_MS && crossedZero) {
+            const dir: "POS" | "NEG" = (firstSign > 0) ? "POS" : "NEG";
+            if (dir !== lastDir || (now - lastDirTs) > REFRACT_MS) {
+              if (dir === "POS") onPos(); else onNeg();
+              lastDir = dir; lastDirTs = now;
+            }
+          }
+          state = "idle";
+        }
+
+        if ((now - startTs) > MAX_MS) state = "idle";
+        break;
+    }
+  };
+}
+
+// 上下用は閾値とリフラクトを強める（script.js の makeDetectorUD）
+function makeDetectorUD(onPos: () => void, onNeg: () => void) {
+  return makeDetector(onPos, onNeg, {
+    TH_HI: CFG.TH_HI * CFG.UD_SCALE,
+    TH_LO: CFG.TH_LO * CFG.UD_SCALE * 0.9,
+    REFRACT_MS: CFG.UD_REFRACT_MS,
+  });
+}
+
+// ====== イベント/ブロックの状態（script.js 同等） ======
+const nowMs = () => performance.now();
+const lastLRts = useRef(0);
+const lastUDts = useRef(0);
+const freezeUntilTs = useRef(0);
+
+const onRight = () => { /* 右＝次 */ skipToNext(); lastLRts.current = nowMs(); };
+const onLeft  = () => { /* 左＝前 */ skipToPrevious(); lastLRts.current = nowMs(); };
+const onUp    = () => {
+  /* 上＝再生/停止 */
+  togglePlayPause();
+  lastUDts.current = nowMs();
+  freezeUntilTs.current = lastUDts.current + CFG.POST_UD_FREEZE_MS; // 直後は全無効
+};
+const onDown  = () => {
+  /* 下＝プレイリスト表示 */
+  setShowPlaylistModal(true);
+  lastUDts.current = nowMs();
+  freezeUntilTs.current = lastUDts.current + CFG.POST_UD_FREEZE_MS;
+};
+
+const detectLR = useRef(makeDetector(onRight, onLeft));
+const detectUD = useRef(makeDetectorUD(onUp, onDown));
+
+// ====== 重力軸の決定（script.js decideUpDownAxis 同等） ======
+let upDownAxis = useRef<"x"|"y"|"z">("z");
+let gravMaxAxis = useRef<"-"|"x"|"y"|"z">("-");
+const lastAxisChangeTs = useRef(0);
+
+function decideUpDownAxis(gx: number, gy: number, gz: number) {
+  const aX = Math.abs(gx), aY = Math.abs(gy), aZ = Math.abs(gz);
+  let maxA = aX, maxAxis: "x"|"y"|"z" = "x";
+  if (aY > maxA) { maxA = aY; maxAxis = "y"; }
+  if (aZ > maxA) { maxA = aZ; maxAxis = "z"; }
+  if (maxA >= 0.6) {
+    const prev = upDownAxis.current;
+    // 元JSそのまま：z が最大なら y をUD軸、y が最大なら z をUD軸
+    if (maxAxis === "z") upDownAxis.current = "y";
+    else if (maxAxis === "y") upDownAxis.current = "z";
+    gravMaxAxis.current = maxAxis;
+    if (upDownAxis.current !== prev) lastAxisChangeTs.current = performance.now();
+  }
+}
+
+// ====== メイン判定（script.js の characteristicvaluechanged 相当） ======
+useEffect(() => {
+  if (!sample) return;
+
+  // 受信値
+  const ax = sample.ax, ay = sample.ay, az = sample.az;
+
+  // 重力推定（LPF）
+  const gx = lpfXproc.current(ax);
+  const gy = lpfYproc.current(ay);
+  const gz = lpfZproc.current(az);
+  decideUpDownAxis(gx, gy, gz);
+
+  // 動き成分（HPF）
+  const fx = hpfXproc.current(ax);
+  const fy = hpfYproc.current(ay);
+  const fz = hpfZproc.current(az);
+
+  // 上下：重力方向（a·ĝ）をHPF
+  const gmag = Math.hypot(gx, gy, gz);
+  let fvert = 0;
+  if (gmag > 0.2) {
+    const nx = gx / gmag, ny = gy / gmag, nz = gz / gmag;
+    const avert = ax * nx + ay * ny + az * nz; // a·ĝ
+    fvert = hpfVert.current(avert);
   }
 
-  // LPF: y[n] = y[n-1] + β ( x[n] - y[n-1] ), β = dt/(RC+dt)
-  function makeLPF(fc: number) {
-    const RC = 1 / (2 * Math.PI * fc);
-    const beta = SAMPLE_DT / (RC + SAMPLE_DT);
-    let yPrev = 0;
-    return (x: number) => {
-      const y = yPrev + beta * (x - yPrev);
-      yPrev = y;
-      return y;
-    };
+  const now = nowMs();
+
+  // ★ UD直後のハードフリーズ（全入力無効）
+  if (now < freezeUntilTs.current) {
+    detectLR.current(0); detectUD.current(0);
+    return;
   }
 
-  // フィルタ（重力推定→HPF）
-  const lpfX = useRef(makeLPF(LPF_FC));
-  const lpfY = useRef(makeLPF(LPF_FC));
-  const hpfX = useRef(makeHPF(HPF_FC));
-  const hpfY = useRef(makeHPF(HPF_FC));
+  // ====== 左右（UD直後は必ずブロック） ======
+  const udToLRBlocked = (now - lastUDts.current) < CFG.UD_TO_LR_BLOCK_MS;
+  if (!udToLRBlocked) {
+    // ★ 元JSは X 軸 HPF（fx）を左右の入力に使用
+    detectLR.current(fx);
+  } else {
+    detectLR.current(0);
+  }
 
-  // ヒステリシス状態
-  const lrState = useRef<"L" | "R" | null>(null);
-  const udState = useRef<"U" | "D" | null>(null);
+  // ====== 上下（相互ブロック／軸クール／優位比／振幅） ======
+  const dominanceOK = Math.abs(fvert) > (CFG.UD_DOM * Math.abs(fx));
+  const axisOK   = (now - lastAxisChangeTs.current) > CFG.AXIS_COOLDOWN_MS;
+  const mutualOK = (now - lastLRts.current) > CFG.MUTUAL_BLOCK_MS;
+  const amplitudeOK = Math.abs(fvert) > (CFG.TH_LO * CFG.UD_SCALE * 0.8);
 
-  // 相互ブロック用のタイムスタンプ
-  const lastUD = useRef(0);
-  const lastLR = useRef(0);
+  if (axisOK && mutualOK && dominanceOK && amplitudeOK) {
+    detectUD.current(fvert); // 発火時に freezeUntilTs を更新（onUp/onDown側で）
+  } else {
+    detectUD.current(0);
+  }
+}, [sample]);
 
-  // 検出→アクション
-  const detectLR = (dir: -1 | 1) => {
-    // 上下のブロック中は無視
-    const now = performance.now();
-    if (now - lastUD.current < UD_REFRACT_MS) return;
-
-    if (dir > 0) skipToNext();     // RIGHT
-    else skipToPrevious();         // LEFT
-    lastLR.current = now;
-  };
-
-  const detectUD = (dir: -1 | 1) => {
-    // 左右のブロック中は無視
-    const now = performance.now();
-    if (now - lastLR.current < LR_REFRACT_MS) return;
-
-    if (dir > 0) togglePlayPause(); // UP
-    else setShowPlaylistModal(true); // DOWN
-    lastUD.current = now;
-  };
-
-  // メイン判定
-  useEffect(() => {
-    if (!sample) return;
-
-    // 重力推定（LPF） … 表示に使いたければ lpfX/lpfY の出力を別途保持
-    const gx = lpfX.current(sample.ax);
-    const gy = lpfY.current(sample.ay);
-
-    // HPFで動的成分を抽出
-    const hx = hpfX.current(sample.ax);
-    const hy = hpfY.current(sample.ay);
-
-    // 上下は強調
-    const hxScaled = hx * UD_SCALE;
-
-    const absX = Math.abs(hxScaled);
-    const absY = Math.abs(hy);
-
-    // ---- まず上下を判定（縦優位条件）----
-    // 条件: |hxScaled| >= UD_DOM * |hy|
-    if (absX >= UD_DOM * absY) {
-      // ヒステリシス
-      if (hxScaled > TH_HI && udState.current !== "U") {
-        udState.current = "U";
-        detectUD(+1);
-        return;
-      }
-      if (hxScaled < -TH_HI && udState.current !== "D") {
-        udState.current = "D";
-        detectUD(-1);
-        return;
-      }
-      // 解除
-      if (Math.abs(hxScaled) < TH_LO) {
-        udState.current = null;
-      }
-      // 上下で決着した場合、左右は見ない
-      return;
-    }
-
-    // ---- 次に左右を判定 ----
-    if (hy > TH_HI && lrState.current !== "R") {
-      lrState.current = "R";
-      detectLR(+1); // RIGHT
-      return;
-    }
-    if (hy < -TH_HI && lrState.current !== "L") {
-      lrState.current = "L";
-      detectLR(-1); // LEFT
-      return;
-    }
-    if (Math.abs(hy) < TH_LO) {
-      lrState.current = null;
-    }
-  }, [sample]); // sample 更新ごとに評価
 
   /* ========== 表示/UI（既存 onClick はそのまま） ========== */
   if (!accessToken || !deviceId) {
