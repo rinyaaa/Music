@@ -28,8 +28,8 @@ export default function Home() {
             src={icon}
             alt="Gesture Audio　ロゴ"
             className={styles.logo}
-            width={150}
-            height={150}
+            width={400}
+            height={400}
           />
           <p>ジェスチャーで音楽を操作しよう！</p>
         </header>
