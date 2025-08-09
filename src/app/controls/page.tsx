@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import styles from "../page.module.scss";
 import Image from "next/image";
-import icon from "@/assets/logo.png";
+import icon from "@/assets/logo.svg";
 import { connectXiaoBle, XiaoBleController, AccelSample } from "@/lib/xiaoBle";
 
 export default function ControlsPage() {
@@ -65,6 +65,7 @@ export default function ControlsPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <Image src={icon} alt="Gesture Audio ロゴ" className={styles.logo} width={250} height={250} />
+
         <p>ジェスチャーで音楽を操作しよう！</p>
 
         {/* （任意）ここに接続テスターを残すならこのまま */}
