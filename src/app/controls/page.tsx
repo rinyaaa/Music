@@ -26,9 +26,10 @@ export default function ControlsPage() {
         onData: (s) => setSample(s),
       });
       ctrlRef.current = ctrl;
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setStatus(`接続に失敗: ${String(e?.message ?? e)}`);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setStatus(`接続に失敗: ${errorMessage}`);
     }
   };
 
@@ -64,7 +65,13 @@ export default function ControlsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <Image src={icon} alt="Gesture Audio ロゴ" className={styles.logo} width={250} height={250} />
+        <Image
+          src={icon}
+          alt="Gesture Audio ロゴ"
+          className={styles.logo}
+          width={250}
+          height={250}
+        />
 
         <p>ジェスチャーで音楽を操作しよう！</p>
 
@@ -72,16 +79,22 @@ export default function ControlsPage() {
         <div style={{ padding: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Image src={icon} alt="logo" width={36} height={36} />
-            <h1 style={{ margin: 0, fontSize: "1.1rem" }}>XIAO BLE 接続テスト</h1>
+            <h1 style={{ margin: 0, fontSize: "1.1rem" }}>
+              XIAO BLE 接続テスト
+            </h1>
           </div>
-          <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div
+            style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}
+          >
             <button onClick={handleConnect}>接続</button>
             <button onClick={handleDisconnect}>切断</button>
           </div>
           <div style={{ marginTop: 8 }}>状態: {status}</div>
           <div style={{ marginTop: 8, whiteSpace: "pre" }}>
             {sample
-              ? `ax: ${sample.ax.toFixed(3)} g, ay: ${sample.ay.toFixed(3)} g, az: ${sample.az.toFixed(3)} g`
+              ? `ax: ${sample.ax.toFixed(3)} g, ay: ${sample.ay.toFixed(
+                  3
+                )} g, az: ${sample.az.toFixed(3)} g`
               : "データ未受信"}
           </div>
         </div>
@@ -89,10 +102,7 @@ export default function ControlsPage() {
 
       <main className={styles.main}>
         {/* ★ ここで props を渡す */}
-        <MusicControls
-          sample={sample}
-          status={status}
-        />
+        <MusicControls sample={sample} status={status} />
       </main>
     </div>
   );

@@ -47,7 +47,7 @@ export default function MusicPage() {
           width={250}
           height={250}
         />
-        <MusicControls />
+        {/* <MusicControls /> */}
 
         <button
           className={styles.testButton}
