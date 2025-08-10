@@ -5,19 +5,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSpotifyStore } from "../store/spotify";
 import styles from "./MusicControls.module.scss";
 
+import backIcon from "@/assets/back.svg"; // 戻るボタンのアイコン
 import IconDown from "@/assets/down.svg";
 import IconLeft from "@/assets/left.svg";
-import IconRight from "@/assets/right.svg";
-import IconUp from "@/assets/up.svg";
+import leftHuman from "@/assets/leftHuman.svg"; // 戻るボタンのアイコン
 import musicIcon from "@/assets/music.svg"; // 音楽アイコン
 import music1Icon from "@/assets/music1.svg"; // 音楽アイコン1
 import music2Icon from "@/assets/music2.svg"; // 音楽アイコン2
 import music3Icon from "@/assets/music3.svg"; // 音楽アイコン3
-import backIcon from "@/assets/back.svg"; // 戻るボタンのアイコン
-import rightHuman from "@/assets/rightHuman.svg"; // 戻るボタンのアイコン
-import leftHuman from "@/assets/leftHuman.svg"; // 戻るボタンのアイコン
 import nextIcon from "@/assets/nextButton.svg"; // 次へボタンのアイコン
+import IconRight from "@/assets/right.svg";
+import rightHuman from "@/assets/rightHuman.svg"; // 戻るボタンのアイコン
 import selectIcon from "@/assets/selectButton.svg"; // アイコンライブラリ
+import IconUp from "@/assets/up.svg";
 import type { AccelSample } from "@/lib/xiaoBle";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -622,7 +622,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
         <>
           <div className={styles.controls}>
             <button onClick={skipToPrevious} className={styles.navButton}>
-              <Image src={IconLeft} alt="Previous" width={60} height={60} />
+              <Image src={IconLeft} alt="Previous" width={80} height={80} />
               <br />
               Back
             </button>
@@ -630,13 +630,18 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
               <span>
                 {isPlaying ? (
                   <>
-                    <Image src={IconDown} alt="Pause" width={80} height={80} />
+                    <Image
+                      src={IconDown}
+                      alt="Pause"
+                      width={100}
+                      height={100}
+                    />
                     <br />
                     Pause
                   </>
                 ) : (
                   <>
-                    <Image src={IconUp} alt="Play" width={80} height={80} />
+                    <Image src={IconUp} alt="Play" width={100} height={100} />
                     <br />
                     Play
                   </>
@@ -644,7 +649,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
               </span>
             </button>
             <button onClick={skipToNext} className={styles.navButton}>
-              <Image src={IconRight} alt="Next" width={60} height={60} />
+              <Image src={IconRight} alt="Next" width={80} height={80} />
               <br />
               Next
             </button>
@@ -654,24 +659,24 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
             <Image
               src={rightHuman}
               alt="Select Playlist"
-              width={120}
-              height={120}
+              width={150}
+              height={150}
               className={styles.backButton}
             />
             <div className={styles.playlistSelector}>
               <Image
                 src={selectIcon}
                 alt="Select Playlist"
-                width={200}
-                height={100}
+                width={230}
+                height={130}
                 onClick={() => setShowPlaylistModal(true)}
                 className={styles.selectIcon}
               />
               <Image
                 src={nextIcon}
                 alt="Select Playlist"
-                width={100}
-                height={100}
+                width={130}
+                height={130}
                 className={styles.nextIcon}
                 onClick={() => router.push("/music")}
               />
@@ -679,8 +684,8 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
             <Image
               src={leftHuman}
               alt="Select Playlist"
-              width={120}
-              height={120}
+              width={150}
+              height={150}
               className={styles.backButton}
             />
           </div>
@@ -692,29 +697,29 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
             <Image
               src={IconLeft}
               alt="Play"
-              width={90}
-              height={90}
+              width={110}
+              height={110}
               onClick={handleButtonClick("/audio/a.mp3")}
             />
             <Image
               src={IconDown}
               alt="Play"
-              width={90}
-              height={90}
+              width={130}
+              height={130}
               onClick={handleButtonClick("/audio/i.mp3")}
             />
             <Image
               src={IconUp}
               alt="Play"
-              width={90}
-              height={90}
+              width={130}
+              height={130}
               onClick={handleButtonClick("/audio/u.mp3")}
             />
             <Image
               src={IconRight}
               alt="Play"
-              width={90}
-              height={90}
+              width={110}
+              height={110}
               onClick={handleButtonClick("/audio/e.mp3")}
             />
 
@@ -733,23 +738,23 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
             <Image
               src={rightHuman}
               alt="Select Playlist"
-              width={120}
-              height={120}
+              width={180}
+              height={180}
               className={styles.backButton}
             />
             <Image
               src={backIcon}
               alt="Select Playlist"
-              width={100}
-              height={100}
+              width={130}
+              height={130}
               className={styles.backButton}
               onClick={() => router.push("/controls")}
             />
             <Image
               src={leftHuman}
               alt="Select Playlist"
-              width={120}
-              height={120}
+              width={180}
+              height={180}
               className={styles.backButton}
             />
           </div>
@@ -818,7 +823,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
               </div>
               <div className={styles.navigationControls}>
                 <button onClick={navigatePrevious} className={styles.navButton}>
-                  <Image src={IconLeft} alt="Previous" width={60} height={60} />
+                  <Image src={IconLeft} alt="Previous" width={80} height={80} />
                   <br />
                   左へ
                 </button>
@@ -826,12 +831,12 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
                   onClick={selectHighlighted}
                   className={styles.selectButton}
                 >
-                  <Image src={IconUp} alt="Play" width={80} height={80} />
+                  <Image src={IconUp} alt="Play" width={100} height={100} />
                   <br />
                   決定
                 </button>
                 <button onClick={navigateNext} className={styles.navButton}>
-                  <Image src={IconRight} alt="Next" width={60} height={60} />
+                  <Image src={IconRight} alt="Next" width={80} height={80} />
                   <br />
                   右へ
                 </button>

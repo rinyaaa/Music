@@ -81,10 +81,10 @@ export default function ControlsPage() {
           </div> */}
           <div className={styles.connectionButtons}>
             <button onClick={handleConnect} className={styles.navButton}>
-              センサーと接続
+              リモコンとせつぞく
             </button>
             <button onClick={handleDisconnect} className={styles.navButton}>
-              センサーと切断
+              せつだん
             </button>
           </div>
 
