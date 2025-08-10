@@ -17,8 +17,8 @@ export default function MusicPage() {
             src={icon}
             alt="Gesture Audio ロゴ"
             className={styles.logo}
-            width={250}
-            height={250}
+            width={300}
+            height={300}
           />
         </div>
         <MusicControls sample={sample} status={status} />
