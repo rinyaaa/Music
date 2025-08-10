@@ -1,8 +1,8 @@
 "use client";
 
-import MusicControls from "../../components/MusicControls";
 import icon from "@/assets/logo.svg"; // ロゴ画像のパスを指定
 import Image from "next/image";
+import MusicControls from "../../components/MusicControls";
 import styles from "./index.module.scss"; // スタイルをインポート
 
 export default function MusicPage() {

@@ -1,13 +1,13 @@
 "use client";
 
+import icon from "@/assets/logo.svg";
+import { AccelSample, connectXiaoBle, XiaoBleController } from "@/lib/xiaoBle";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import MusicControls from "../../components/MusicControls";
 import { useSpotifyStore } from "../../store/spotify";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
 import styles from "../page.module.scss";
-import Image from "next/image";
-import icon from "@/assets/logo.svg";
-import { connectXiaoBle, XiaoBleController, AccelSample } from "@/lib/xiaoBle";
 
 export default function ControlsPage() {
   const { accessToken } = useSpotifyStore();
@@ -69,34 +69,33 @@ export default function ControlsPage() {
           src={icon}
           alt="Gesture Audio ロゴ"
           className={styles.logo}
-          width={250}
-          height={250}
+          width={200}
+          height={200}
         />
-
-        <p>ジェスチャーで音楽を操作しよう！</p>
 
         {/* （任意）ここに接続テスターを残すならこのまま */}
         <div style={{ padding: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Image src={icon} alt="logo" width={36} height={36} />
-            <h1 style={{ margin: 0, fontSize: "1.1rem" }}>
-              XIAO BLE 接続テスト
-            </h1>
+            <h1 style={{ margin: 0, fontSize: "1.1rem" }}>センサーと接続！</h1>
+          </div> */}
+          <div className={styles.connectionButtons}>
+            <button onClick={handleConnect} className={styles.navButton}>
+              センサーと接続
+            </button>
+            <button onClick={handleDisconnect} className={styles.navButton}>
+              センサーと切断
+            </button>
           </div>
-          <div
-            style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}
-          >
-            <button onClick={handleConnect}>接続</button>
-            <button onClick={handleDisconnect}>切断</button>
-          </div>
-          <div style={{ marginTop: 8 }}>状態: {status}</div>
+
+          {/* <div style={{ marginTop: 8 }}>状態: {status}</div>
           <div style={{ marginTop: 8, whiteSpace: "pre" }}>
             {sample
               ? `ax: ${sample.ax.toFixed(3)} g, ay: ${sample.ay.toFixed(
                   3
                 )} g, az: ${sample.az.toFixed(3)} g`
               : "データ未受信"}
-          </div>
+          </div> */}
         </div>
       </header>
 

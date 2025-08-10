@@ -1,12 +1,16 @@
 "use client";
 
-import SpotifyAuth from "../components/SpotifyAuth";
-import { useSpotifyStore } from "../store/spotify";
+import icon from "@/assets/logo.png"; // ロゴ画像のパスを指定
+import {
+  default as leftHuman,
+  default as rightHuman,
+} from "@/assets/rightHuman.svg"; // おじのアイコン
+import Image from "next/image"; // 画像を表示するためのインポート
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import SpotifyAuth from "../components/SpotifyAuth";
+import { useSpotifyStore } from "../store/spotify";
 import styles from "./page.module.scss";
-import Image from "next/image"; // 画像を表示するためのインポート
-import icon from "@/assets/logo.png"; // ロゴ画像のパスを指定
 
 export default function Home() {
   const { accessToken } = useSpotifyStore();
@@ -35,9 +39,24 @@ export default function Home() {
         </header>
 
         <main className={styles.loginBox}>
-          <p>音楽をジェスチャーで操作するために</p>
-          <p>Spotifyにログインしてください</p>
-          <SpotifyAuth />
+          <div className={styles.testControls}>
+            <p>音楽をジェスチャーで操作するために</p>
+            <p>Spotifyにログインしてください</p>
+            <SpotifyAuth />
+            <Image
+              src={leftHuman}
+              alt="Select Playlist"
+              width={120}
+              height={120}
+            />
+            <Image
+              src={rightHuman}
+              alt="Select Playlist"
+              width={120}
+              height={120}
+              className={styles.backButton}
+            />
+          </div>
         </main>
       </div>
     </div>
