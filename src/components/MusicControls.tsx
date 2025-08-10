@@ -5,18 +5,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSpotifyStore } from "../store/spotify";
 import styles from "./MusicControls.module.scss";
 
-import backIcon from "@/assets/back.svg"; // 戻るボタンのアイコン
+import backIcon from "@/assets/back.svg";
 import IconDown from "@/assets/down.svg";
 import IconLeft from "@/assets/left.svg";
-import leftHuman from "@/assets/leftHuman.svg"; // 戻るボタンのアイコン
-import musicIcon from "@/assets/music.svg"; // 音楽アイコン
-import music1Icon from "@/assets/music1.svg"; // 音楽アイコン1
-import music2Icon from "@/assets/music2.svg"; // 音楽アイコン2
-import music3Icon from "@/assets/music3.svg"; // 音楽アイコン3
-import nextIcon from "@/assets/nextButton.svg"; // 次へボタンのアイコン
+import leftHuman from "@/assets/leftHuman.svg";
+import musicIcon from "@/assets/music.svg";
+import music1Icon from "@/assets/music1.svg";
+import music2Icon from "@/assets/music2.svg";
+import music3Icon from "@/assets/music3.svg";
+import nextIcon from "@/assets/nextButton.svg";
 import IconRight from "@/assets/right.svg";
-import rightHuman from "@/assets/rightHuman.svg"; // 戻るボタンのアイコン
-import selectIcon from "@/assets/selectButton.svg"; // アイコンライブラリ
+import rightHuman from "@/assets/rightHuman.svg";
+import selectIcon from "@/assets/selectButton.svg";
 import IconUp from "@/assets/up.svg";
 import type { AccelSample } from "@/lib/xiaoBle";
 import { usePathname, useRouter } from "next/navigation";
@@ -54,10 +54,10 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
       y: number;
     }>
   >([]);
-  const pathname = usePathname();
 
+  const pathname = usePathname();
   const hideOn = ["/controls"];
-  const controlsShow = hideOn.includes(pathname);
+  const controlsShow = hideOn.includes(pathname); // trueならSpotifyコントロール画面
 
   /* ========== Spotify API ========== */
   const fetchPlaylists = useCallback(async () => {
@@ -134,7 +134,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     if (accessToken) fetchPlaylists();
   }, [accessToken, fetchPlaylists]);
 
-  const togglePlayPause = async () => {
+  const togglePlayPause = useCallback(async () => {
     if (!accessToken || !deviceId) return;
     try {
       const endpoint = isPlaying ? "pause" : "play";
@@ -161,51 +161,52 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
       console.error("Toggle play/pause failed:", e);
       alert("ネットワークエラーが発生しました");
     }
-  };
+  }, [accessToken, deviceId, isPlaying]);
 
-  const skipToNext = async () => {
-    if (!accessToken || !deviceId) return;
+  // ※ next/previous は device_id を付けず、「現在アクティブ」を操作
+  const skipToNext = useCallback(async () => {
+    if (!accessToken) return;
     try {
-      const r = await fetch(
-        `https://api.spotify.com/v1/me/player/next?device_id=${deviceId}`,
-        { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      const r = await fetch(`https://api.spotify.com/v1/me/player/next`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (r.status === 401)
         return alert("認証が切れました。再ログインしてください。");
       if (r.status === 403) return alert("この機能はプレミアム限定です。");
       if (!(r.ok || r.status === 204)) {
-        console.error("Skip next エラー:", r.status);
+        console.error("Skip next エラー:", r.status, await r.text());
         alert(`エラー (${r.status})`);
       }
     } catch (e) {
       console.error("Skip to next failed:", e);
       alert("ネットワークエラーが発生しました");
     }
-  };
+  }, [accessToken]);
 
-  const skipToPrevious = async () => {
-    if (!accessToken || !deviceId) return;
+  const skipToPrevious = useCallback(async () => {
+    if (!accessToken) return;
     try {
-      const r = await fetch(
-        `https://api.spotify.com/v1/me/player/previous?device_id=${deviceId}`,
-        { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } }
-      );
+      const r = await fetch(`https://api.spotify.com/v1/me/player/previous`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (r.status === 401)
         return alert("認証が切れました。再ログインしてください。");
       if (r.status === 403) return alert("この機能はプレミアム限定です。");
       if (!(r.ok || r.status === 204)) {
-        console.error("Skip previous エラー:", r.status);
+        console.error("Skip previous エラー:", r.status, await r.text());
         alert(`エラー (${r.status})`);
       }
     } catch (e) {
       console.error("Skip to previous failed:", e);
       alert("ネットワークエラーが発生しました");
     }
-  };
+  }, [accessToken]);
 
   /* ========== ここから「元JS同等」の判定ロジック ========== */
 
-  // ====== 固定パラメータ（script.js と同値） ======
+  // ====== 固定パラメータ ======
   const CFG = {
     TH_HI: 0.45, // g
     TH_LO: 0.25, // g
@@ -220,9 +221,9 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     POST_UD_FREEZE_MS: 350,
   };
 
-  const SAMPLE_DT = 0.02; // 50Hz想定（元JSと同じ）
+  const SAMPLE_DT = 0.02; // 50Hz想定
 
-  // ====== フィルタ（script.js と同式） ======
+  // ====== フィルタ ======
   function makeHPF(fc: number) {
     const RC = 1 / (2 * Math.PI * fc);
     const alpha = RC / (RC + SAMPLE_DT);
@@ -254,7 +255,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   const lpfZproc = useRef(makeLPF(CFG.LPF_FC));
   const hpfVert = useRef(makeHPF(CFG.HPF_FC));
 
-  // ====== 汎用検出器（script.js の makeDetector と同等） ======
+  // ====== 汎用検出器 ======
   function makeDetector(
     onPos: () => void,
     onNeg: () => void,
@@ -335,37 +336,115 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   const lastReasonRef = useRef<string>("-");
   const [lastReason, setLastReason] = useState<string>("-");
 
+  /* =========================================
+     A案：最新関数を1か所（ref）に集約
+  ========================================= */
+  const latest = useRef<{
+    skipToNext: () => void | Promise<void>;
+    skipToPrevious: () => void | Promise<void>;
+    togglePlayPause: () => void | Promise<void>;
+    navigateNext: () => void;
+    navigatePrevious: () => void;
+    selectHighlighted: () => void;
+    showPlaylistModal: boolean;
+    controlsShow: boolean;
+    playMP3: (file: string) => void;
+    showRandomIcons: () => void;
+  }>({
+    skipToNext: () => {},
+    skipToPrevious: () => {},
+    togglePlayPause: () => {},
+    navigateNext: () => {},
+    navigatePrevious: () => {},
+    selectHighlighted: () => {},
+    showPlaylistModal: false,
+    controlsShow: true,
+    playMP3: () => {},
+    showRandomIcons: () => {},
+  });
+
+  useEffect(() => {
+    latest.current.skipToNext = skipToNext;
+    latest.current.skipToPrevious = skipToPrevious;
+    latest.current.togglePlayPause = togglePlayPause;
+    latest.current.navigateNext = navigateNext;
+    latest.current.navigatePrevious = navigatePrevious;
+    latest.current.selectHighlighted = selectHighlighted;
+    latest.current.showPlaylistModal = showPlaylistModal;
+    latest.current.controlsShow = controlsShow;
+    latest.current.playMP3 = (file: string) => playMP3(file);
+    latest.current.showRandomIcons = () => showRandomIcons();
+  }, [
+    skipToNext,
+    skipToPrevious,
+    togglePlayPause,
+    navigateNext,
+    navigatePrevious,
+    selectHighlighted,
+    showPlaylistModal,
+    controlsShow,
+  ]);
+
+  // onRight/onLeft/onUp/onDown は latest.current を読むだけの薄い関数に
   const onRight = () => {
     setLastGesture("Right");
-    skipToNext();
+    if (!latest.current.controlsShow) {
+      // 音パッド画面：右→ e.mp3
+      latest.current.playMP3("/audio/e.mp3");
+      latest.current.showRandomIcons();
+    } else {
+      // controls画面：Spotify 曲送り（モーダル中は右ナビ）
+      if (latest.current.showPlaylistModal) latest.current.navigateNext();
+      else latest.current.skipToNext();
+    }
     lastLRts.current = nowMs();
-    // console.log("Right");
   };
   const onLeft = () => {
     setLastGesture("Left");
-    skipToPrevious();
+    if (!latest.current.controlsShow) {
+      // 音パッド画面：左→ a.mp3
+      latest.current.playMP3("/audio/a.mp3");
+      latest.current.showRandomIcons();
+    } else {
+      // controls画面：Spotify 曲戻し（モーダル中は左ナビ）
+      if (latest.current.showPlaylistModal) latest.current.navigatePrevious();
+      else latest.current.skipToPrevious();
+    }
     lastLRts.current = nowMs();
-    // console.log("Left");
   };
   const onUp = () => {
     setLastGesture("Up");
-    togglePlayPause();
+    if (!latest.current.controlsShow) {
+      // 音パッド画面：上→ u.mp3
+      latest.current.playMP3("/audio/u.mp3");
+      latest.current.showRandomIcons();
+    } else {
+      // controls画面：モーダル中は決定、通常時は再生/一時停止
+      if (latest.current.showPlaylistModal) latest.current.selectHighlighted();
+      else latest.current.togglePlayPause();
+    }
     lastUDts.current = nowMs();
-    freezeUntilTs.current = lastUDts.current + CFG.POST_UD_FREEZE_MS; // 直後フリーズ
-    // console.log("Up");
+    freezeUntilTs.current = lastUDts.current + CFG.POST_UD_FREEZE_MS;
   };
   const onDown = () => {
     setLastGesture("Down");
-    setShowPlaylistModal(true);
+    if (!latest.current.controlsShow) {
+      // 音パッド画面：下→ i.mp3
+      latest.current.playMP3("/audio/i.mp3");
+      latest.current.showRandomIcons();
+    } else {
+      // controls画面：プレイリストモーダルを表示
+      setShowPlaylistModal(true);
+    }
     lastUDts.current = nowMs();
     freezeUntilTs.current = lastUDts.current + CFG.POST_UD_FREEZE_MS;
-    // console.log("Down");
   };
 
+  // 検出器は一度だけ作ればOK（中で読むのは latest.current）
   const detectLR = useRef(makeDetector(onRight, onLeft));
   const detectUD = useRef(makeDetectorUD(onUp, onDown));
 
-  // ====== 重力軸の決定（script.js 同等） ======
+  // ====== 重力軸の決定 ======
   const upDownAxis = useRef<"x" | "y" | "z">("z");
   const gravMaxAxis = useRef<"-" | "x" | "y" | "z">("-");
   const lastAxisChangeTs = useRef(0);
@@ -399,10 +478,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
       if (audioFile) {
         audioRef.current.src = audioFile;
         setCurrentAudio(audioFile);
-
-        // ちょっと待ってから再生（ファイル変更のため）
         setTimeout(() => {
-          console.log("Playing audio:", audioFile);
           if (audioRef.current) {
             audioRef.current.play();
             setIsPlay(true);
@@ -421,17 +497,14 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   };
 
   const showRandomIcons = () => {
-    // 4つのアイコンをランダムな位置に配置
     const icons = [musicIcon, music1Icon, music2Icon, music3Icon];
     const newIcons = icons.map((icon, index) => ({
       id: index,
       icon: icon,
-      x: Math.random() * 70 + 10, // 10%から80%の範囲でランダム
-      y: Math.random() * 70 + 10, // 10%から80%の範囲でランダム
+      x: Math.random() * 70 + 10,
+      y: Math.random() * 70 + 10,
     }));
-
     setMultipleIcons(newIcons);
-
     setTimeout(() => {
       setMultipleIcons([]);
     }, 2500);
@@ -485,7 +558,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     // 左右（UD直後のブロック）
     const udToLRBlocked = now - lastUDts.current < CFG.UD_TO_LR_BLOCK_MS;
     if (!udToLRBlocked) {
-      detectLR.current(fx); // ※ script.js 準拠：左右= X軸HPF
+      detectLR.current(fx); // 左右= X軸HPF
     } else {
       detectLR.current(0);
     }
@@ -504,7 +577,6 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
       }
     } else {
       detectUD.current(0);
-      // いま発火しない主因を簡潔に表示
       const reason = !axisOK
         ? "axis-cooldown"
         : !mutualOK
@@ -523,7 +595,7 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
     }
   }, [sample]);
 
-  /* ========== 表示/UI（既存 onClick はそのまま） ========== */
+  /* ========== 表示/UI ========== */
   if (!accessToken || !deviceId) {
     return (
       <div className={styles.controlsContainer}>
@@ -533,14 +605,13 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
   }
 
   const handleButtonClick = (audioFile: string) => () => {
-    // ボタンクリック時の処理
     playMP3(audioFile);
     showRandomIcons();
   };
 
   return (
     <div className={styles.controlsContainer}>
-      {/* 複数のランダムアイコンのオーバーレイ */}
+      {/* ランダムアイコンのオーバーレイ */}
       {multipleIcons.map((iconData) => (
         <div
           key={iconData.id}
@@ -617,7 +688,6 @@ const MusicControls: React.FC<MusicControlsProps> = ({ sample, status }) => {
         )}
       </div>
 
-      {/* 既存 onClick はそのまま残す */}
       {controlsShow ? (
         <>
           <div className={styles.controls}>
